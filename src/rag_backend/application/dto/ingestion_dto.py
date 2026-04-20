@@ -39,7 +39,6 @@ class IngestionResponse(BaseModel):
     file_name: str
     chunks_stored: int
     collection_name: str
-    embedding_version: str
     status: str = "completed"
     task_id: str | None = None  # for async processing
 

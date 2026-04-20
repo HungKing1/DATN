@@ -1,6 +1,6 @@
 """Ingestion service — orchestrates document ingestion pipeline.
 
-Flow: InputProcessor → ChunkingStrategy → EmbeddingProvider → VectorRepository
+Flow: InputProcessor → [CollectionRouter] → ChunkingStrategy → EmbeddingProvider → VectorRepository
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ from rag_backend.domain.interfaces.embedding_provider import EmbeddingProvider
 from rag_backend.domain.interfaces.vector_repository import VectorRepository
 from rag_backend.domain.models.document import IngestionResult
 from rag_backend.infrastructure.input_processors.factory import InputProcessorFactory
+from rag_backend.infrastructure.query.collection_router import CollectionRouter
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class IngestionService:
         chunking_strategy: ChunkingStrategy,
         embedding_provider: EmbeddingProvider,
         vector_repository: VectorRepository,
+        collection_router: CollectionRouter | None = None,
         max_document_size_mb: int = 50,
         chunk_size: int = 512,
         chunk_overlap: int = 50,
@@ -47,6 +49,7 @@ class IngestionService:
         self._chunking = chunking_strategy
         self._embeddings = embedding_provider
         self._vector_repo = vector_repository
+        self._collection_router = collection_router
         self._max_size_mb = max_document_size_mb
         self._chunk_size = chunk_size
         self._chunk_overlap = chunk_overlap
@@ -55,17 +58,15 @@ class IngestionService:
     async def ingest_file(
         self,
         file_path: Path,
-        tenant_id: str = "default",
         collection_name: str = "documents",
-        use_separate_collection: bool = False,
+        tenant_id: str = "default",
     ) -> IngestionResult:
-        """Ingest a single file into the vector store.
+        """Ingest a single file into the vector store using Contextual Chunk Headers.
 
         Args:
             file_path: Path to the document file.
-            tenant_id: Tenant identifier for multi-tenant support.
             collection_name: Target vector collection name.
-            use_separate_collection: If True, use a per-type collection.
+            tenant_id: Tenant identifier for multi-tenant support.
 
         Returns:
             IngestionResult with storage details.
@@ -82,15 +83,42 @@ class IngestionService:
             # 3. Process the document
             processed = await processor.process(file_path)
             processed.metadata.tenant_id = tenant_id
-            processed.metadata.embedding_version = self._embeddings.get_version()
 
-            # 4. Determine target collection
-            if use_separate_collection:
-                target_collection = f"{collection_name}_{processed.metadata.file_type}"
-            else:
-                target_collection = collection_name
 
-            # 5. Ensure collection exists
+            # 4. Determine target collection using CCH
+            target_collection = collection_name
+            
+            if self._collection_router:
+                # ▶ Contextual Chunk Headers: LLM generates metadata
+                header = await self._collection_router.generate_collection_header(
+                    document_text=processed.content,
+                )
+                # Override the LLM's suggested collection_name with the user's
+                header.collection_name = target_collection
+                header.tenant_id = tenant_id
+                header.source_files.append(file_path.name)
+                header.document_count = 1
+
+                # Register in collection registry
+                existing = self._collection_router.registry.get(target_collection)
+                if existing:
+                    # Collection already exists — append file to existing
+                    existing.source_files.append(file_path.name)
+                    existing.document_count += 1
+                    logger.info(
+                        "Appending to existing collection '%s' (title: '%s')",
+                        target_collection,
+                        existing.title,
+                    )
+                else:
+                    self._collection_router.registry.add(header)
+                    logger.info(
+                        "Registered collection '%s' with CCH (title: '%s')",
+                        target_collection,
+                        header.title,
+                    )
+
+            # 5. Ensure collection exists in vector DB
             if not await self._vector_repo.collection_exists(target_collection):
                 await self._vector_repo.create_collection(
                     collection_name=target_collection,
@@ -132,7 +160,6 @@ class IngestionService:
                 document_id=processed.id,
                 chunks_stored=len(stored_ids),
                 collection_name=target_collection,
-                embedding_version=self._embeddings.get_version(),
             )
 
         except (DocumentTooLargeError, IngestionError):
@@ -146,9 +173,8 @@ class IngestionService:
     async def ingest_batch(
         self,
         file_paths: list[Path],
-        tenant_id: str = "default",
         collection_name: str = "documents",
-        use_separate_collection: bool = False,
+        tenant_id: str = "default",
     ) -> list[IngestionResult]:
         """Ingest multiple files.
 
@@ -160,10 +186,9 @@ class IngestionService:
         for file_path in file_paths:
             try:
                 result = await self.ingest_file(
-                    file_path,
-                    tenant_id=tenant_id,
+                    file_path=file_path,
                     collection_name=collection_name,
-                    use_separate_collection=use_separate_collection,
+                    tenant_id=tenant_id,
                 )
                 results.append(result)
             except Exception as e:
@@ -173,7 +198,6 @@ class IngestionService:
                         document_id=uuid4(),
                         chunks_stored=0,
                         collection_name=collection_name,
-                        embedding_version=self._embeddings.get_version(),
                         success=False,
                         error_message=str(e),
                     )

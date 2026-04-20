@@ -31,7 +31,6 @@ class QueryController:
         query = Query(
             original_text=request.query,
             tenant_id=tenant_id,
-            collection_name=request.collection_name,
             top_k=request.top_k,
             hybrid_alpha=request.hybrid_alpha,
             metadata_filters=request.metadata_filters,
@@ -55,7 +54,6 @@ class QueryController:
         query = Query(
             original_text=request.query,
             tenant_id=tenant_id,
-            collection_name=request.collection_name,
             top_k=request.top_k,
             hybrid_alpha=request.hybrid_alpha,
             metadata_filters=request.metadata_filters,

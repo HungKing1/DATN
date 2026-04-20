@@ -71,10 +71,6 @@ class ChunkingError(RAGBackendError):
     """Raised when document chunking fails."""
 
 
-# --- Cache ---
-
-class CacheError(RAGBackendError):
-    """Raised when cache operations fail."""
 
 
 # --- Reranking ---

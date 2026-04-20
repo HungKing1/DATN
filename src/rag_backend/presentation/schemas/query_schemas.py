@@ -11,7 +11,6 @@ class QueryRequestSchema(BaseModel):
     """Request schema for RAG queries."""
 
     query: str
-    collection_name: str = "documents"
     top_k: int = 20
     rerank_top_k: int = 5
     hybrid_alpha: float = Field(default=0.5, ge=0.0, le=1.0)

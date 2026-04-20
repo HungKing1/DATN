@@ -27,8 +27,8 @@ class IngestionController:
     async def upload_file(
         self,
         file: UploadFile,
-        tenant_id: str = "default",
         collection_name: str = "documents",
+        tenant_id: str = "default",
     ) -> FileUploadResponse:
         """Handle single file upload and ingestion."""
         # Save uploaded file to temp location
@@ -43,8 +43,8 @@ class IngestionController:
         try:
             result = await self._service.ingest_file(
                 file_path=tmp_path,
-                tenant_id=tenant_id,
                 collection_name=collection_name,
+                tenant_id=tenant_id,
             )
 
             return FileUploadResponse(
@@ -52,7 +52,6 @@ class IngestionController:
                 file_name=file.filename or "unknown",
                 chunks_stored=result.chunks_stored,
                 collection_name=result.collection_name,
-                embedding_version=result.embedding_version,
             )
         finally:
             tmp_path.unlink(missing_ok=True)
@@ -60,8 +59,8 @@ class IngestionController:
     async def upload_batch(
         self,
         files: list[UploadFile],
-        tenant_id: str = "default",
         collection_name: str = "documents",
+        tenant_id: str = "default",
     ) -> BatchUploadResponse:
         """Handle batch file upload and ingestion."""
         tmp_paths: list[Path] = []
@@ -79,8 +78,8 @@ class IngestionController:
 
             results = await self._service.ingest_batch(
                 file_paths=tmp_paths,
-                tenant_id=tenant_id,
                 collection_name=collection_name,
+                tenant_id=tenant_id,
             )
 
             file_responses = []
@@ -91,7 +90,6 @@ class IngestionController:
                         file_name=file.filename or "unknown",
                         chunks_stored=result.chunks_stored,
                         collection_name=result.collection_name,
-                        embedding_version=result.embedding_version,
                         status="completed" if result.success else "failed",
                     )
                 )

@@ -69,7 +69,6 @@ class WeaviateRepository(VectorRepository):
                 Property(name="file_name", data_type=DataType.TEXT),
                 Property(name="file_type", data_type=DataType.TEXT),
                 Property(name="tenant_id", data_type=DataType.TEXT),
-                Property(name="embedding_version", data_type=DataType.TEXT),
             ]
 
             client.collections.create(
@@ -142,7 +141,6 @@ class WeaviateRepository(VectorRepository):
                         "file_name": chunk.metadata.file_name,
                         "file_type": str(chunk.metadata.file_type),
                         "tenant_id": chunk.metadata.tenant_id,
-                        "embedding_version": chunk.metadata.embedding_version,
                     }
 
                     uuid = batch.add_object(

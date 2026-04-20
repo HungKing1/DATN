@@ -46,21 +46,18 @@ async def lifespan(app: FastAPI):
     app.state.ingestion_controller = container.ingestion_controller()
     app.state.query_controller = container.query_controller()
     app.state.vector_repository = container.vector_repository()
+    app.state.collection_router = container.collection_router()
 
     logger.info("Application started successfully")
 
     yield
 
-    # Shutdown
+    # Shutdown 
     logger.info("Shutting down...")
     # Close connections
     vector_repo = container.vector_repository()
     if hasattr(vector_repo, "close"):
         await vector_repo.close()
-
-    cache = container.cache_service()
-    if hasattr(cache, "close"):
-        await cache.close()
 
     logger.info("Shutdown complete")
 

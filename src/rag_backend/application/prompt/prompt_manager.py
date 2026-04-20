@@ -1,4 +1,4 @@
-"""Prompt management — versioned prompt templates for RAG system."""
+"""Prompt management — prompt templates for RAG system."""
 
 from __future__ import annotations
 
@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 class PromptManager:
-    """Manages prompt templates with variable substitution and versioning.
+    """Manages prompt templates with variable substitution.
 
-    Supports multiple prompt versions for A/B testing and iteration.
+    Provides a central registry for all prompt templates used in the RAG pipeline.
     """
 
     # --- Default Prompt Templates ---
@@ -49,44 +49,31 @@ Context:
 Summary:"""
 
     def __init__(self) -> None:
-        self._templates: dict[str, dict[str, str]] = {
-            "rag_system": {"v1": self.RAG_SYSTEM_PROMPT},
-            "rag_user": {"v1": self.RAG_USER_PROMPT},
-            "query_rewrite": {"v1": self.QUERY_REWRITE_PROMPT},
-            "summarization": {"v1": self.SUMMARIZATION_PROMPT},
-        }
-        self._active_versions: dict[str, str] = {
-            "rag_system": "v1",
-            "rag_user": "v1",
-            "query_rewrite": "v1",
-            "summarization": "v1",
+        self._templates: dict[str, str] = {
+            "rag_system": self.RAG_SYSTEM_PROMPT,
+            "rag_user": self.RAG_USER_PROMPT,
+            "query_rewrite": self.QUERY_REWRITE_PROMPT,
+            "summarization": self.SUMMARIZATION_PROMPT,
         }
 
     def get_prompt(
         self,
         template_name: str,
-        version: str | None = None,
         **variables: Any,
     ) -> str:
         """Get a formatted prompt template.
 
         Args:
             template_name: Name of the prompt template.
-            version: Optional version string. Uses active version if not specified.
             **variables: Template variables to substitute.
 
         Returns:
             Formatted prompt string.
         """
-        ver = version or self._active_versions.get(template_name, "v1")
-        versions = self._templates.get(template_name)
+        template = self._templates.get(template_name)
 
-        if not versions:
-            raise ValueError(f"Unknown prompt template: {template_name}")
-
-        template = versions.get(ver)
         if not template:
-            raise ValueError(f"Unknown version '{ver}' for template '{template_name}'")
+            raise ValueError(f"Unknown prompt template: {template_name}")
 
         try:
             return template.format(**variables)
@@ -98,33 +85,12 @@ Summary:"""
     def register_template(
         self,
         template_name: str,
-        version: str,
         template: str,
-        set_active: bool = False,
     ) -> None:
-        """Register a new prompt template version."""
-        if template_name not in self._templates:
-            self._templates[template_name] = {}
-        self._templates[template_name][version] = template
+        """Register a new prompt template."""
+        self._templates[template_name] = template
+        logger.info("Registered prompt template: %s", template_name)
 
-        if set_active or template_name not in self._active_versions:
-            self._active_versions[template_name] = version
-
-        logger.info(
-            "Registered prompt template: %s (version=%s, active=%s)",
-            template_name,
-            version,
-            set_active,
-        )
-
-    def set_active_version(self, template_name: str, version: str) -> None:
-        """Set the active version for a template."""
-        if template_name not in self._templates:
-            raise ValueError(f"Unknown template: {template_name}")
-        if version not in self._templates[template_name]:
-            raise ValueError(f"Unknown version: {version}")
-        self._active_versions[template_name] = version
-
-    def list_templates(self) -> dict[str, list[str]]:
-        """List all templates with their versions."""
-        return {name: list(versions.keys()) for name, versions in self._templates.items()}
+    def list_templates(self) -> list[str]:
+        """List all registered template names."""
+        return list(self._templates.keys())

@@ -1,4 +1,4 @@
-"""EmbeddingProvider interface — supports multiple providers and versioning."""
+"""EmbeddingProvider interface — supports multiple providers."""
 
 from __future__ import annotations
 
@@ -9,7 +9,6 @@ class EmbeddingProvider(ABC):
     """Abstract base class for embedding providers.
 
     Implementations: SentenceTransformerProvider, OpenAIEmbeddingProvider, etc.
-    Supports versioning so embeddings can be tracked and migrated.
     """
 
     @abstractmethod
@@ -33,9 +32,4 @@ class EmbeddingProvider(ABC):
     @abstractmethod
     def get_model_name(self) -> str:
         """Return the name of the embedding model."""
-        ...
-
-    @abstractmethod
-    def get_version(self) -> str:
-        """Return the current embedding version string."""
         ...

@@ -34,12 +34,15 @@ async def upload_document(
     request: Request = None,
     controller=Depends(_get_ingestion_controller),
 ):
-    """Upload and ingest a single document."""
+    """Upload and ingest a single document using Contextual Chunk Headers.
+    
+    The system will auto-generate metadata via LLM and save into collection_name.
+    """
     tenant_id = getattr(request.state, "tenant_id", "default") if request else "default"
     return await controller.upload_file(
         file=file,
-        tenant_id=tenant_id,
         collection_name=collection_name,
+        tenant_id=tenant_id,
     )
 
 
@@ -54,8 +57,8 @@ async def upload_batch(
     tenant_id = getattr(request.state, "tenant_id", "default") if request else "default"
     return await controller.upload_batch(
         files=files,
-        tenant_id=tenant_id,
         collection_name=collection_name,
+        tenant_id=tenant_id,
     )
 
 
@@ -99,3 +102,27 @@ async def create_collection(
         tenant_id=body.tenant_id,
     )
     return {"status": "created", "collection_name": body.collection_name}
+
+
+@router.get("/registry")
+async def list_registered_collections(request: Request):
+    """List all collections with their LLM-generated contextual headers.
+    
+    Returns title, description, keywords, and document count for each collection.
+    """
+    router = request.app.state.collection_router
+    collections = router.registry.list_all()
+    return {
+        "count": len(collections),
+        "collections": [
+            {
+                "collection_name": c.collection_name,
+                "title": c.title,
+                "description": c.description,
+                "keywords": c.keywords,
+                "document_count": c.document_count,
+                "source_files": c.source_files,
+            }
+            for c in collections
+        ],
+    }

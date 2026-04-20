@@ -5,13 +5,11 @@ Flow: Query → QueryService → PromptManager → LLMProvider → Post-processi
 
 from __future__ import annotations
 
-import hashlib
 import logging
 from collections.abc import AsyncIterator
 
 from rag_backend.application.prompt.prompt_manager import PromptManager
 from rag_backend.application.services.query_service import QueryService
-from rag_backend.domain.interfaces.cache_service import CacheService
 from rag_backend.domain.interfaces.llm_provider import LLMProvider
 from rag_backend.domain.models.query import Citation, Query, RAGResponse
 
@@ -19,17 +17,15 @@ logger = logging.getLogger(__name__)
 
 
 class RAGPipeline:
-    """Full RAG pipeline with caching, streaming, and citation support.
+    """Full RAG pipeline with streaming and citation support.
 
     Pipeline steps:
-    1. Cache check
-    2. Query understanding (via QueryService)
-    3. Retrieval + Reranking (via QueryService)
-    4. Context building (via QueryService)
-    5. Prompt construction (via PromptManager)
-    6. LLM generation
-    7. Post-processing (citations, formatting)
-    8. Cache storage
+    1. Query understanding (via QueryService)
+    2. Retrieval + Reranking (via QueryService)
+    3. Context building (via QueryService)
+    4. Prompt construction (via PromptManager)
+    5. LLM generation
+    6. Post-processing (citations, formatting)
     """
 
     def __init__(
@@ -37,14 +33,10 @@ class RAGPipeline:
         query_service: QueryService,
         llm_provider: LLMProvider,
         prompt_manager: PromptManager,
-        cache_service: CacheService | None = None,
-        cache_ttl: int = 3600,
     ) -> None:
         self._query_service = query_service
         self._llm = llm_provider
         self._prompts = prompt_manager
-        self._cache = cache_service
-        self._cache_ttl = cache_ttl
 
     async def run(
         self,
@@ -53,7 +45,6 @@ class RAGPipeline:
         use_reranker: bool = True,
         use_hybrid: bool = True,
         max_context_tokens: int = 4000,
-        use_cache: bool = True,
     ) -> RAGResponse:
         """Execute the full RAG pipeline.
 
@@ -63,20 +54,12 @@ class RAGPipeline:
             use_reranker: Whether to use re-ranking.
             use_hybrid: Whether to use hybrid search.
             max_context_tokens: Max tokens for context.
-            use_cache: Whether to check/store in cache.
 
         Returns:
             RAGResponse with answer, citations, and metadata.
         """
-        # 1. Check cache
-        cache_key = self._make_cache_key(query)
-        if use_cache and self._cache:
-            cached = await self._cache.get(cache_key)
-            if cached:
-                logger.info("Cache hit for query: %s", query.original_text[:50])
-                return RAGResponse(**cached)
 
-        # 2–4. Query pipeline (rewrite, retrieve, rerank, build context)
+        # 1–3. Query pipeline (route, rewrite, retrieve, rerank, build context)
         processed_query, ranked_results, context = await self._query_service.process_query(
             query=query,
             use_rewrite=use_rewrite,
@@ -85,7 +68,7 @@ class RAGPipeline:
             max_context_tokens=max_context_tokens,
         )
 
-        # 5. Build prompt
+        # 4. Build prompt
         system_prompt = self._prompts.get_prompt("rag_system")
         user_prompt = self._prompts.get_prompt(
             "rag_user",
@@ -93,16 +76,16 @@ class RAGPipeline:
             query=processed_query.rewritten_text or processed_query.original_text,
         )
 
-        # 6. LLM generation
+        # 5. LLM generation
         generation = await self._llm.generate(
             prompt=user_prompt,
             system_prompt=system_prompt,
         )
 
-        # 7. Post-processing — extract citations
+        # 6. Post-processing — extract citations
         citations = self._extract_citations(ranked_results, generation.text)
 
-        # 8. Build response
+        # 7. Build response
         response = RAGResponse(
             query=query.original_text,
             answer=generation.text,
@@ -120,14 +103,6 @@ class RAGPipeline:
                 "rewritten_query": processed_query.rewritten_text,
             },
         )
-
-        # 9. Store in cache
-        if use_cache and self._cache:
-            await self._cache.set(
-                cache_key,
-                response.model_dump(),
-                ttl_seconds=self._cache_ttl,
-            )
 
         return response
 
@@ -201,8 +176,4 @@ class RAGPipeline:
 
         return citations
 
-    @staticmethod
-    def _make_cache_key(query: Query) -> str:
-        """Generate a cache key from query parameters."""
-        key_data = f"{query.original_text}:{query.collection_name}:{query.tenant_id}"
-        return f"rag:query:{hashlib.sha256(key_data.encode()).hexdigest()}"
+

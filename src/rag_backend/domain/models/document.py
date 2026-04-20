@@ -33,8 +33,7 @@ class DocumentMetadata(BaseModel):
     language: str = "en"
     tenant_id: str = "default"
     collection_name: str = ""
-    embedding_version: str = "v1"
-    schema_version: str = "v1"
+
     custom: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -76,6 +75,6 @@ class IngestionResult(BaseModel):
     document_id: UUID
     chunks_stored: int
     collection_name: str
-    embedding_version: str
+
     success: bool = True
     error_message: str | None = None

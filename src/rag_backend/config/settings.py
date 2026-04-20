@@ -21,6 +21,8 @@ class LLMProviderType(str, Enum):
     OPENAI = "openai"
     CLAUDE = "claude"
     OLLAMA = "ollama"
+    GOOGLE = "google"
+    GROQ = "groq"
 
 
 class EmbeddingProviderType(str, Enum):
@@ -65,17 +67,27 @@ class Settings(BaseSettings):
     default_tenant_id: str = "default"
 
     # --- LLM Provider ---
-    llm_provider: LLMProviderType = LLMProviderType.LANGCHAIN_OPENAI
+    llm_provider: LLMProviderType = LLMProviderType.GROQ
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
     openai_temperature: float = 0.1
     openai_max_tokens: int = 2048
 
+    # --- Google Gemini ---
+    google_api_key: str = ""
+    google_model: str = "gemini-2.5-flash"
+    google_temperature: float = 0.1
+
+    # --- Groq ---
+    groq_api_key: str = ""
+    groq_model: str = "openai/gpt-oss-120b"
+    groq_temperature: float = 0.1
+    groq_max_tokens: int = 2048
+
     # --- Embedding ---
     embedding_provider: EmbeddingProviderType = EmbeddingProviderType.SENTENCE_TRANSFORMERS
     embedding_model: str = "all-MiniLM-L6-v2"
     embedding_dimension: int = 384
-    embedding_version: str = "v1"
 
     # --- Vector Database ---
     vector_db_provider: VectorDBProvider = VectorDBProvider.WEAVIATE
@@ -96,13 +108,7 @@ class Settings(BaseSettings):
     retrieval_top_k: int = 20
     hybrid_search_alpha: float = Field(default=0.5, ge=0.0, le=1.0)
 
-    # --- Cache (Redis) ---
-    redis_url: str = "redis://localhost:6379/0"
-    cache_ttl_seconds: int = 3600
 
-    # --- Background Jobs (Celery) ---
-    celery_broker_url: str = "redis://localhost:6379/1"
-    celery_result_backend: str = "redis://localhost:6379/2"
 
     # --- Ingestion ---
     ingestion_strategy: IngestionStrategyType = IngestionStrategyType.SHARED

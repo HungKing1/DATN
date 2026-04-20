@@ -1,4 +1,4 @@
-"""Sentence Transformers embedding provider with versioning."""
+"""Sentence Transformers embedding provider."""
 
 from __future__ import annotations
 
@@ -13,28 +13,21 @@ logger = logging.getLogger(__name__)
 
 
 class SentenceTransformerProvider(EmbeddingProvider):
-    """Embedding provider using sentence-transformers.
-
-    Supports model versioning for tracking which embeddings
-    were generated with which model version.
-    """
+    """Embedding provider using sentence-transformers."""
 
     def __init__(
         self,
         model_name: str = "all-MiniLM-L6-v2",
-        version: str = "v1",
         device: str | None = None,
     ) -> None:
         self._model_name = model_name
-        self._version = version
         try:
             self._model = SentenceTransformer(model_name, device=device)
             self._dimension = self._model.get_sentence_embedding_dimension()
             logger.info(
-                "Loaded embedding model: %s (dim=%d, version=%s)",
+                "Loaded embedding model: %s (dim=%d)",
                 model_name,
                 self._dimension,
-                version,
             )
         except Exception as e:
             raise EmbeddingError(
@@ -69,6 +62,3 @@ class SentenceTransformerProvider(EmbeddingProvider):
 
     def get_model_name(self) -> str:
         return self._model_name
-
-    def get_version(self) -> str:
-        return self._version

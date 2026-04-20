@@ -35,7 +35,7 @@ class Query(BaseModel):
     query_type: QueryType | None = None
     modality: InputModality = InputModality.TEXT
     tenant_id: str = "default"
-    collection_name: str = "documents"
+    collection_names: list[str] = Field(default_factory=lambda: ["documents"])
     metadata_filters: dict[str, str | int | float | bool] = Field(default_factory=dict)
     top_k: int = 20
     hybrid_alpha: float = 0.5

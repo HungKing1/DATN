@@ -20,8 +20,8 @@ from rag_backend.application.prompt.prompt_manager import PromptManager
 from rag_backend.application.services.ingestion_service import IngestionService
 from rag_backend.application.services.query_service import QueryService
 from rag_backend.application.services.rag_pipeline import RAGPipeline
-from rag_backend.config.settings import ChunkingStrategyType, Settings
-from rag_backend.domain.interfaces.cache_service import CacheService
+from rag_backend.config.settings import ChunkingStrategyType, LLMProviderType, Settings
+
 from rag_backend.domain.interfaces.chunking_strategy import ChunkingStrategy
 from rag_backend.domain.interfaces.context_builder import ContextBuilder
 from rag_backend.domain.interfaces.embedding_provider import EmbeddingProvider
@@ -31,7 +31,7 @@ from rag_backend.domain.interfaces.reranker import Reranker
 from rag_backend.domain.interfaces.vector_repository import VectorRepository
 
 # Infrastructure implementations
-from rag_backend.infrastructure.cache.redis_cache import RedisCacheService
+
 from rag_backend.infrastructure.chunking.recursive_chunker import RecursiveChunker
 from rag_backend.infrastructure.chunking.semantic_chunker import SemanticChunker
 from rag_backend.infrastructure.embeddings.sentence_transformer_provider import (
@@ -42,10 +42,13 @@ from rag_backend.infrastructure.input_processors.json_processor import JSONProce
 from rag_backend.infrastructure.input_processors.pdf_processor import PDFProcessor
 from rag_backend.infrastructure.input_processors.txt_processor import TXTProcessor
 from rag_backend.infrastructure.llm.langchain_provider import LangChainOpenAIProvider
+from rag_backend.infrastructure.llm.google_provider import GoogleGeminiProvider
 from rag_backend.infrastructure.query.default_context_builder import DefaultContextBuilder
 from rag_backend.infrastructure.query.llm_query_rewriter import LLMQueryRewriter
 from rag_backend.infrastructure.reranking.cross_encoder_reranker import CrossEncoderReranker
 from rag_backend.infrastructure.vector_db.weaviate_repository import WeaviateRepository
+from rag_backend.infrastructure.query.collection_router import CollectionRouter
+from rag_backend.domain.models.collection_registry import CollectionRegistry
 
 # Controllers
 from rag_backend.presentation.controllers.ingestion_controller import IngestionController
@@ -73,7 +76,6 @@ class Container:
         if "embedding_provider" not in self._instances:
             self._instances["embedding_provider"] = SentenceTransformerProvider(
                 model_name=self._settings.embedding_model,
-                version=self._settings.embedding_version,
             )
         return self._instances["embedding_provider"]  # type: ignore
 
@@ -88,13 +90,30 @@ class Container:
 
     def llm_provider(self) -> LLMProvider:
         if "llm_provider" not in self._instances:
-            # ▶ To switch LLM provider, change this line:
-            self._instances["llm_provider"] = LangChainOpenAIProvider(
-                api_key=self._settings.openai_api_key,
-                model=self._settings.openai_model,
-                temperature=self._settings.openai_temperature,
-                max_tokens=self._settings.openai_max_tokens,
-            )
+            # ▶ Auto-selected based on LLM_PROVIDER env var:
+            if self._settings.llm_provider == LLMProviderType.GOOGLE:
+                self._instances["llm_provider"] = GoogleGeminiProvider(
+                    api_key=self._settings.google_api_key,
+                    model=self._settings.google_model,
+                    temperature=self._settings.google_temperature,
+                )
+            elif self._settings.llm_provider == LLMProviderType.GROQ:
+                from rag_backend.infrastructure.llm.groq_provider import GroqProvider
+                self._instances["llm_provider"] = GroqProvider(
+                    api_key=self._settings.groq_api_key,
+                    model=self._settings.groq_model,
+                    temperature=self._settings.groq_temperature,
+                    max_tokens=self._settings.groq_max_tokens,
+                )
+            else:
+                # Default: LangChain OpenAI (also used for OPENAI / LANGCHAIN_OPENAI)
+                self._instances["llm_provider"] = LangChainOpenAIProvider(
+                    api_key=self._settings.openai_api_key,
+                    model=self._settings.openai_model,
+                    temperature=self._settings.openai_temperature,
+                    max_tokens=self._settings.openai_max_tokens,
+                )
+            logger.info("LLM provider: %s", self._settings.llm_provider.value)
         return self._instances["llm_provider"]  # type: ignore
 
     def chunking_strategy(self) -> ChunkingStrategy:
@@ -127,13 +146,7 @@ class Container:
             self._instances["context_builder"] = DefaultContextBuilder()
         return self._instances["context_builder"]  # type: ignore
 
-    def cache_service(self) -> CacheService:
-        if "cache_service" not in self._instances:
-            self._instances["cache_service"] = RedisCacheService(
-                redis_url=self._settings.redis_url,
-                default_ttl=self._settings.cache_ttl_seconds,
-            )
-        return self._instances["cache_service"]  # type: ignore
+
 
     def input_processor_factory(self) -> InputProcessorFactory:
         if "input_processor_factory" not in self._instances:
@@ -148,6 +161,15 @@ class Container:
             self._instances["input_processor_factory"] = factory
         return self._instances["input_processor_factory"]  # type: ignore
 
+    def collection_router(self) -> CollectionRouter:
+        if "collection_router" not in self._instances:
+            self._instances["collection_router"] = CollectionRouter(
+                llm_provider=self.llm_provider(),
+                embedding_provider=self.embedding_provider(),
+                registry=CollectionRegistry(),
+            )
+        return self._instances["collection_router"]  # type: ignore
+
     # ──────────────────────────────────────────────
     # Application Services
     # ──────────────────────────────────────────────
@@ -159,6 +181,7 @@ class Container:
                 chunking_strategy=self.chunking_strategy(),
                 embedding_provider=self.embedding_provider(),
                 vector_repository=self.vector_repository(),
+                collection_router=self.collection_router(),
                 max_document_size_mb=self._settings.max_document_size_mb,
                 chunk_size=self._settings.chunk_size,
                 chunk_overlap=self._settings.chunk_overlap,
@@ -173,6 +196,7 @@ class Container:
                 vector_repository=self.vector_repository(),
                 reranker=self.reranker(),
                 context_builder=self.context_builder(),
+                collection_router=self.collection_router(),
             )
         return self._instances["query_service"]  # type: ignore
 
@@ -187,8 +211,6 @@ class Container:
                 query_service=self.query_service(),
                 llm_provider=self.llm_provider(),
                 prompt_manager=self.prompt_manager(),
-                cache_service=self.cache_service(),
-                cache_ttl=self._settings.cache_ttl_seconds,
             )
         return self._instances["rag_pipeline"]  # type: ignore
 
