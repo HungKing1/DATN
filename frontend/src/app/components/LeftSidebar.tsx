@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   ChevronLeft, ChevronRight, Search, Plus, Check, Edit2, X, Trash2,
   FolderOpen, FolderClosed, FileText, FileSpreadsheet, Image, Globe, ChevronDown, ChevronUp,
-  BarChart3, CreditCard, HelpCircle, Brain, MessageSquare, Map, Settings, Command
+  BarChart3, CreditCard, HelpCircle, Brain, MessageSquare, Map, Settings, Command, LogOut, BookOpen
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { Notebook } from '../types';
 
 function NotebookItem({
@@ -40,7 +41,7 @@ function NotebookItem({
     <div
       className={`group relative flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors ${
         isActive
-          ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300'
+          ? 'bg-blue-50 text-blue-700'
           : 'hover:bg-accent text-foreground'
       }`}
       onClick={() => {
@@ -48,7 +49,7 @@ function NotebookItem({
       }}
       title={collapsed ? notebook.title : undefined}
     >
-      <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs bg-${notebook.color}-100 dark:bg-${notebook.color}-900/30`}>
+      <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-xs bg-${notebook.color}-100`}>
         {notebook.emoji}
       </div>
       
@@ -107,6 +108,7 @@ function NotebookItem({
 }
 
 export function LeftSidebar() {
+  const { logout } = useAuth();
   const {
     sidebarCollapsed, toggleSidebar,
     setCommandPaletteOpen,
@@ -123,6 +125,7 @@ export function LeftSidebar() {
     { path: '/flashcards', icon: <CreditCard className="w-4 h-4" />, label: 'Flashcards' },
     { path: '/quiz', icon: <HelpCircle className="w-4 h-4" />, label: 'Quiz' },
     { path: '/mindmap', icon: <Map className="w-4 h-4" />, label: 'Mind Map' },
+    { path: '/legal', icon: <BookOpen className="w-4 h-4" />, label: 'Văn bản Pháp luật' },
   ];
 
   return (
@@ -203,7 +206,7 @@ export function LeftSidebar() {
                 sidebarCollapsed ? 'justify-center' : ''
               } ${
                 active
-                  ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400'
+                  ? 'bg-blue-50 text-blue-600'
                   : 'text-muted-foreground hover:bg-accent hover:text-foreground'
               }`}
               title={sidebarCollapsed ? item.label : undefined}
@@ -260,29 +263,48 @@ export function LeftSidebar() {
       {/* Footer */}
       <div className={`px-2 py-2 border-t border-border flex-shrink-0 ${sidebarCollapsed ? 'flex flex-col items-center gap-1' : 'flex flex-col gap-1.5'}`}>
         {!sidebarCollapsed && (
-          <button
-            onClick={() => navigate('/settings')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors text-sm w-full ${
-              location.pathname === '/settings' ? 'bg-accent text-foreground' : ''
-            }`}
-          >
-            <Settings className="w-4 h-4 flex-shrink-0" />
-            <span>Settings</span>
-          </button>
+          <>
+            <button
+              onClick={() => navigate('/settings')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                location.pathname === '/settings' 
+                  ? 'bg-blue-50 text-blue-600' 
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+              }`}
+            >
+              <Settings className="w-4 h-4 flex-shrink-0" />
+              <span>Settings</span>
+            </button>
+            <button
+              onClick={logout}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
+            >
+              <LogOut className="w-4 h-4 flex-shrink-0" />
+              <span>Đăng xuất</span>
+            </button>
+          </>
         )}
 
         {sidebarCollapsed && (
           <>
             <button
               onClick={() => navigate('/settings')}
-              className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-accent text-muted-foreground transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-accent text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Settings"
             >
               <Settings className="w-4 h-4" />
             </button>
             <button
+              onClick={logout}
+              className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors mt-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
+              title="Đăng xuất"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+            <button
               onClick={toggleSidebar}
-              className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-accent text-muted-foreground transition-colors mt-1"
+              className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-accent text-muted-foreground transition-colors mt-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              title="Mở rộng"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

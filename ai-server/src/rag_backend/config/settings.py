@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 from enum import Enum
 
 from pydantic import Field
@@ -62,10 +64,10 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
 
-
-
     # --- LLM Provider ---
-    llm_provider: LLMProviderType = LLMProviderType.GROQ
+    llm_provider: LLMProviderType = LLMProviderType.GOOGLE
+    
+    # --- OpenAI (backup) ---
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
     openai_temperature: float = 0.1
@@ -73,7 +75,7 @@ class Settings(BaseSettings):
 
     # --- Google Gemini ---
     google_api_key: str = ""
-    google_model: str = "gemini-2.5-flash"
+    google_model: str = "gemini-3.1-flash-lite-preview"
     google_temperature: float = 0.1
 
     # --- Groq ---
@@ -106,16 +108,12 @@ class Settings(BaseSettings):
     retrieval_top_k: int = 20
     hybrid_search_alpha: float = Field(default=0.5, ge=0.0, le=1.0)
 
-
-
     # --- Ingestion ---
     ingestion_strategy: IngestionStrategyType = IngestionStrategyType.SHARED
     max_batch_size: int = 100
     max_document_size_mb: int = 50
 
-
-
-
+@lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    """Factory function for settings (allows caching / overrides)."""
+    """Singleton factory — reads .env exactly once at startup."""
     return Settings()

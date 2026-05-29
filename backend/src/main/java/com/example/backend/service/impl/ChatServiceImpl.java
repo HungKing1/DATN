@@ -1,5 +1,7 @@
 package com.example.backend.service.impl;
 
+import com.example.backend.dto.ai.AgentQueryRequest;
+import com.example.backend.dto.ai.AgentQueryResponse;
 import com.example.backend.dto.ai.RAGQueryRequest;
 import com.example.backend.dto.ai.RAGResponse;
 import com.example.backend.dto.request.ChatRequest;
@@ -50,18 +52,39 @@ public class ChatServiceImpl implements ChatService {
                 .build();
         messageRepository.save(userMessage);
 
-        // Call AI Server for real RAG response
-        Message aiMessage;
+        // Route to correct AI Server pipeline based on mode
+        boolean isAgentMode = "agent".equalsIgnoreCase(request.getMode());
+        Message aiMessage = isAgentMode
+                ? processAgentQuery(notebookId, request.getContent())
+                : processQuickQuery(notebookId, request.getContent());
+
+        aiMessage = messageRepository.save(aiMessage);
+
+        // Update Notebook message count
+        notebook.setMessageCount(notebook.getMessageCount() + 2);
+        notebookRepository.save(notebook);
+
+        return aiMessage;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // PRIVATE HELPERS
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Standard RAG pipeline — calls POST /api/v1/query/ on AI Server.
+     * Fast response: Query Rewrite → Hybrid Search → Rerank → LLM Generate.
+     */
+    private Message processQuickQuery(String notebookId, String content) {
         try {
             RAGQueryRequest ragRequest = RAGQueryRequest.builder()
-                    .query(request.getContent())
+                    .query(content)
                     .useReranker(true)
                     .useQueryRewrite(true)
                     .build();
 
             RAGResponse ragResponse = aiServerClient.query(ragRequest);
 
-            // Convert RAG citations to Message citations
             List<Message.Citation> citations = ragResponse.getCitations() != null
                     ? ragResponse.getCitations().stream()
                         .map(c -> Message.Citation.builder()
@@ -72,43 +95,78 @@ public class ChatServiceImpl implements ChatService {
                         .collect(Collectors.toList())
                     : List.of();
 
-            aiMessage = Message.builder()
+            Double confidence = ragResponse.getCitations() != null && !ragResponse.getCitations().isEmpty()
+                    ? ragResponse.getCitations().stream()
+                        .mapToDouble(RAGResponse.RAGCitation::getRelevanceScore)
+                        .average()
+                        .orElse(0.0)
+                    : null;
+
+            log.info("Quick RAG response generated for notebook: {}", notebookId);
+            return Message.builder()
                     .notebookId(notebookId)
                     .role("ai")
                     .content(ragResponse.getAnswer())
                     .citations(citations)
-                    .confidence(ragResponse.getCitations() != null && !ragResponse.getCitations().isEmpty()
-                            ? ragResponse.getCitations().stream()
-                                .mapToDouble(RAGResponse.RAGCitation::getRelevanceScore)
-                                .average()
-                                .orElse(0.0)
-                            : null)
+                    .confidence(confidence)
                     .suggestedQuestions(List.of(
                             "Bạn có thể giải thích thêm không?",
                             "Có điều luật nào liên quan khác không?"))
                     .build();
 
-            log.info("AI response generated via RAG pipeline for notebook: {}", notebookId);
-
         } catch (Exception e) {
-            // Fallback when AI Server is unavailable
-            log.error("AI Server unavailable, returning fallback response: {}", e.getMessage());
-            aiMessage = Message.builder()
+            log.error("AI Server unavailable (quick mode), returning fallback: {}", e.getMessage());
+            return buildFallbackMessage(notebookId, content);
+        }
+    }
+
+    /**
+     * Multi-Agent RAG pipeline — calls POST /api/v1/query/agent on AI Server.
+     * Deep reasoning: MasterLawyerAgent → parallel ParalegalAgents → synthesize.
+     */
+    private Message processAgentQuery(String notebookId, String content) {
+        try {
+            AgentQueryRequest agentRequest = AgentQueryRequest.builder()
+                    .question(content)   // AI Server field is "question", not "query"
+                    .build();
+
+            AgentQueryResponse agentResponse = aiServerClient.agentQuery(agentRequest);
+
+            log.info("Multi-Agent RAG response generated for notebook: {}, iterations: {}",
+                    notebookId, agentResponse != null ? agentResponse.getIterations() : 0);
+
+            String answer = agentResponse != null ? agentResponse.getAnswer() : null;
+            if (answer == null || answer.isBlank()) {
+                answer = "Không tìm thấy thông tin phù hợp trong cơ sở dữ liệu luật.";
+            }
+
+            return Message.builder()
                     .notebookId(notebookId)
                     .role("ai")
-                    .content("⚠️ Hệ thống AI tạm thời không khả dụng. Vui lòng thử lại sau.\n\n"
-                            + "Câu hỏi của bạn: \"" + request.getContent() + "\"")
-                    .confidence(0.0)
-                    .suggestedQuestions(List.of("Thử lại câu hỏi"))
+                    .content(answer)
+                    .citations(List.of()) // Agent mode trả về raw text, không có structured citations
+                    .confidence(null)
+                    .suggestedQuestions(List.of(
+                            "Phân tích thêm chi tiết điều luật này?",
+                            "Có trường hợp ngoại lệ nào không?",
+                            "Mức xử phạt cụ thể là gì?"))
                     .build();
+
+        } catch (Exception e) {
+            log.error("AI Server unavailable (agent mode), returning fallback: {}", e.getMessage());
+            return buildFallbackMessage(notebookId, content);
         }
+    }
 
-        aiMessage = messageRepository.save(aiMessage);
-
-        // Update Notebook
-        notebook.setMessageCount(notebook.getMessageCount() + 2);
-        notebookRepository.save(notebook);
-
-        return aiMessage;
+    private Message buildFallbackMessage(String notebookId, String content) {
+        return Message.builder()
+                .notebookId(notebookId)
+                .role("ai")
+                .content("⚠️ Hệ thống AI tạm thời không khả dụng. Vui lòng thử lại sau.\n\n"
+                        + "Câu hỏi của bạn: \"" + content + "\"")
+                .confidence(0.0)
+                .suggestedQuestions(List.of("Thử lại câu hỏi"))
+                .build();
     }
 }
+

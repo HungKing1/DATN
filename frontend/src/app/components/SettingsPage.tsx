@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Settings, Palette, Database,
-  CheckCircle2, ChevronRight, Download, Trash2, Moon, Sun
+  CheckCircle2, ChevronRight, Download, Trash2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -73,25 +73,9 @@ function SectionCard({ title, icon, children, delay = 0 }: SectionCardProps) {
 export function SettingsPage() {
   const { settings, updateSettings } = useApp();
   const [saved, setSaved] = useState(false);
-  const [isDark, setIsDark] = useState(() =>
-    document.documentElement.classList.contains('dark')
-  );
-
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
-  };
-
-  const toggleTheme = () => {
-    const next = !isDark;
-    setIsDark(next);
-    if (next) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
   };
 
   return (
@@ -111,7 +95,7 @@ export function SettingsPage() {
             onClick={handleSave}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all ${
               saved
-                ? 'bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700'
+                ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
                 : 'bg-gradient-to-r from-blue-500 to-violet-600 text-white hover:opacity-90'
             }`}
           >
@@ -125,37 +109,6 @@ export function SettingsPage() {
           {/* Appearance */}
           <SectionCard title="Appearance" icon={<Palette className="w-4 h-4 text-amber-500" />} delay={0.1}>
             <div className="py-1">
-              <div className="flex items-center justify-between py-3.5 border-b border-border/60">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                    {isDark ? <Moon className="w-4 h-4 text-blue-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
-                  </div>
-                  <div>
-                    <p className="text-sm text-foreground">Theme</p>
-                    <p className="text-xs text-muted-foreground">{isDark ? 'Dark mode active' : 'Light mode active'}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 bg-muted rounded-xl p-1">
-                  <button
-                    onClick={() => isDark && toggleTheme()}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all ${
-                      !isDark ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Sun className="w-3.5 h-3.5" />
-                    Light
-                  </button>
-                  <button
-                    onClick={() => !isDark && toggleTheme()}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all ${
-                      isDark ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Moon className="w-3.5 h-3.5" />
-                    Dark
-                  </button>
-                </div>
-              </div>
               <ToggleRow
                 label="Compact Mode"
                 description="Reduce spacing for more content"
@@ -178,10 +131,10 @@ export function SettingsPage() {
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>
-              <button className="w-full flex items-center gap-3 p-3 rounded-xl border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-left">
+              <button className="w-full flex items-center gap-3 p-3 rounded-xl border border-red-200 hover:bg-red-50 transition-colors text-left">
                 <Trash2 className="w-4 h-4 text-red-500 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm text-red-600 dark:text-red-400">Clear All Chats</p>
+                  <p className="text-sm text-red-600">Clear All Chats</p>
                   <p className="text-xs text-muted-foreground">Permanently delete all conversation history</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />

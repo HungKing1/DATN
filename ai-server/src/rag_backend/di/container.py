@@ -46,10 +46,17 @@ from rag_backend.infrastructure.reranking.cross_encoder_reranker import CrossEnc
 from rag_backend.infrastructure.vector_db.weaviate_repository import WeaviateRepository
 from rag_backend.infrastructure.query.collection_router import CollectionRouter
 # CollectionRegistry removed — Law collection in Weaviate serves as persistent registry
+# Agents
+from rag_backend.application.services.multi_agent_service import MultiAgentService
+from rag_backend.application.agents.master_lawyer_agent import MasterLawyerAgent
+from rag_backend.application.agents.paralegal_agent import ParalegalAgentFactory
 
 # Controllers
 from rag_backend.presentation.controllers.ingestion_controller import IngestionController
 from rag_backend.presentation.controllers.query_controller import QueryController
+from rag_backend.presentation.controllers.agent_controller import AgentController
+
+
 
 logger = logging.getLogger(__name__)
 
@@ -222,6 +229,32 @@ class Container:
                 rag_pipeline=self.rag_pipeline(),
             )
         return self._instances["query_controller"]  # type: ignore
+
+    def multi_agent_service(self) -> MultiAgentService:
+        if "multi_agent_service" not in self._instances:
+            master = MasterLawyerAgent(
+                llm_provider=self.llm_provider(),
+                prompt_manager=self.prompt_manager(),
+            )
+            paralegal_factory = ParalegalAgentFactory(
+                llm_provider=self.llm_provider(),
+                vector_repository=self.vector_repository(),
+                embedding_provider=self.embedding_provider(),
+                prompt_manager=self.prompt_manager(),
+            )
+            self._instances["multi_agent_service"] = MultiAgentService(
+                master_agent=master,
+                paralegal_factory=paralegal_factory,
+                max_iterations=5,
+            )
+        return self._instances["multi_agent_service"]  # type: ignore
+
+    def agent_controller(self) -> AgentController:
+        if "agent_controller" not in self._instances:
+            self._instances["agent_controller"] = AgentController(
+                multi_agent_service=self.multi_agent_service()
+            )
+        return self._instances["agent_controller"]  # type: ignore
 
 
 # --- Module-level singleton ---

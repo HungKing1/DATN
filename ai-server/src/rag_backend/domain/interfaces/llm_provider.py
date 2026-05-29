@@ -62,3 +62,8 @@ class LLMProvider(ABC):
     def get_model_name(self) -> str:
         """Return the name of the underlying model."""
         ...
+
+    @abstractmethod
+    def get_underlying_model(self) -> Any:
+        """Return the underlying LangChain BaseChatModel instance."""
+        ...

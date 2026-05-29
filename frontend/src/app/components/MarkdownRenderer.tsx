@@ -1,131 +1,52 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface MarkdownRendererProps {
   content: string;
   className?: string;
 }
 
-function escapeHtml(text: string) {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-function renderInline(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
-    .replace(/\[(\d+)\]/g, '<sup class="citation-ref">[$1]</sup>');
-}
-
 export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
-  const lines = content.split('\n');
-  const elements: React.ReactNode[] = [];
-  let i = 0;
-  let key = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Code block
-    if (line.startsWith('```')) {
-      const codeLines: string[] = [];
-      i++;
-      while (i < lines.length && !lines[i].startsWith('```')) {
-        codeLines.push(lines[i]);
-        i++;
-      }
-      elements.push(
-        <pre key={key++} className="code-block">
-          <code>{codeLines.join('\n')}</code>
-        </pre>
-      );
-      i++;
-      continue;
-    }
-
-    // H2
-    if (line.startsWith('## ')) {
-      elements.push(
-        <h2
-          key={key++}
-          className="md-h2"
-          dangerouslySetInnerHTML={{ __html: renderInline(line.slice(3)) }}
-        />
-      );
-      i++;
-      continue;
-    }
-
-    // H3
-    if (line.startsWith('### ')) {
-      elements.push(
-        <h3
-          key={key++}
-          className="md-h3"
-          dangerouslySetInnerHTML={{ __html: renderInline(line.slice(4)) }}
-        />
-      );
-      i++;
-      continue;
-    }
-
-    // Unordered list
-    if (line.match(/^[-*] /)) {
-      const items: string[] = [];
-      while (i < lines.length && lines[i].match(/^[-*] /)) {
-        items.push(lines[i].slice(2));
-        i++;
-      }
-      elements.push(
-        <ul key={key++} className="md-ul">
-          {items.map((item, idx) => (
-            <li key={idx} dangerouslySetInnerHTML={{ __html: renderInline(item) }} />
-          ))}
-        </ul>
-      );
-      continue;
-    }
-
-    // Ordered list
-    if (line.match(/^\d+\. /)) {
-      const items: string[] = [];
-      while (i < lines.length && lines[i].match(/^\d+\. /)) {
-        items.push(lines[i].replace(/^\d+\. /, ''));
-        i++;
-      }
-      elements.push(
-        <ol key={key++} className="md-ol">
-          {items.map((item, idx) => (
-            <li key={idx} dangerouslySetInnerHTML={{ __html: renderInline(item) }} />
-          ))}
-        </ol>
-      );
-      continue;
-    }
-
-    // Empty line
-    if (line.trim() === '') {
-      i++;
-      continue;
-    }
-
-    // Paragraph
-    elements.push(
-      <p
-        key={key++}
-        className="md-p"
-        dangerouslySetInnerHTML={{ __html: renderInline(line) }}
-      />
-    );
-    i++;
-  }
+  // Tiền xử lý: chuyển [1], [2] thành dạng link đặc biệt để dễ dàng custom render
+  // Ví dụ: [1] -> [[1]](cite:1)
+  const processedContent = content.replace(/\[(\d+)\]/g, '[[$1]](cite:$1)');
 
   return (
     <div className={`markdown-body ${className}`}>
-      {elements}
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h2: ({ node, ...props }) => <h2 className="md-h2" {...props} />,
+          h3: ({ node, ...props }) => <h3 className="md-h3" {...props} />,
+          p:  ({ node, ...props }) => <p className="md-p" {...props} />,
+          ul: ({ node, ...props }) => <ul className="md-ul" {...props} />,
+          ol: ({ node, ...props }) => <ol className="md-ol" {...props} />,
+          a:  ({ node, href, children, ...props }) => {
+            if (href?.startsWith('cite:')) {
+              return <sup className="citation-ref">{children}</sup>;
+            }
+            return <a href={href} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+          },
+          code: ({ node, className, children, ...props }: any) => {
+            // Check if it's inline or a block
+            // ReactMarkdown passes inline as a boolean or we can infer it
+            const match = /language-(\w+)/.exec(className || '');
+            const isInline = props.inline ?? (!match && !String(children).includes('\n'));
+            
+            if (isInline) {
+              return <code className="inline-code" {...props}>{children}</code>;
+            }
+            return (
+              <pre className="code-block" {...props}>
+                <code className={className}>{children}</code>
+              </pre>
+            );
+          },
+        }}
+      >
+        {processedContent}
+      </ReactMarkdown>
     </div>
   );
 }

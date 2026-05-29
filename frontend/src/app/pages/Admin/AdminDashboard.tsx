@@ -133,13 +133,13 @@ export function AdminDashboard() {
             {stats.aiHealth === 'healthy' && (
               <>
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                <span className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">Hoạt động</span>
+                <span className="text-lg font-semibold text-emerald-600">Hoạt động</span>
               </>
             )}
             {stats.aiHealth === 'unhealthy' && (
               <>
                 <XCircle className="w-5 h-5 text-red-500" />
-                <span className="text-lg font-semibold text-red-600 dark:text-red-400">Không khả dụng</span>
+                <span className="text-lg font-semibold text-red-600">Không khả dụng</span>
               </>
             )}
           </div>

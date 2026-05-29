@@ -215,10 +215,14 @@ export function CollectionRegistryPage() {
             </code>
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchLaws} disabled={loading}>
+        <button 
+          onClick={fetchLaws} 
+          disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           {loading ? 'Đang tải...' : 'Làm mới'}
-        </Button>
+        </button>
       </motion.div>
 
       {/* Stats row */}

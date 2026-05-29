@@ -1,0 +1,232 @@
+# ⚙️ DATN Backend — Spring Boot REST API
+> Cung cấp REST API cho ứng dụng học luật AI. Xác thực bằng Cookie Session, lưu trữ MongoDB, tích hợp AI Server (FastAPI) qua WebClient.
+> **Đọc file này đầu tiên trước mọi task.** Không cần đọc lại toàn bộ source code.
+
+---
+
+## 🛠 1. Tech Stack
+
+| Mục | Công nghệ |
+|---|---|
+| Framework | **Spring Boot 4.0.5** |
+| Language | **Java 17** |
+| Build tool | **Maven** (`mvnw`) |
+| Database | **MongoDB** (Spring Data MongoDB, `legal_assistant_db`) |
+| Security | **Spring Security** — Custom Cookie Session (STATELESS, không dùng JWT) |
+| HTTP Client | **Spring WebFlux / WebClient** (giao tiếp với AI Server) |
+| Validation | **Spring Validation** (`@Valid`, Bean Validation) |
+| Boilerplate | **Lombok** (`@Data`, `@Builder`, `@RequiredArgsConstructor`) |
+| Server port | **8080** |
+
+---
+
+## 📂 2. Cấu trúc thư mục
+
+```text
+backend/
+├── pom.xml
+└── src/main/
+    ├── resources/
+    │   └── application.properties     # Cấu hình server, MongoDB, cookie, AI Server
+    └── java/com/example/backend/
+        ├── BackendApplication.java    # Entry point
+        ├── config/
+        │   ├── SecurityConfig.java    # CORS, filter chain, role-based authorization
+        │   └── WebClientConfig.java   # WebClient bean cho gọi AI Server
+        ├── controller/               # REST Controllers (tầng vào duy nhất)
+        │   ├── AuthController.java        # /api/v1/auth/**
+        │   ├── NotebookController.java    # /api/v1/notebooks/**
+        │   ├── ChatController.java        # /api/v1/chat
+        │   ├── AdminController.java       # /api/v1/admin/** (ROLE_ADMIN)
+        │   ├── LegalDataController.java   # /api/v1/legal/**
+        │   ├── FlashcardController.java   # /api/v1/flashcards/**
+        │   ├── QuizController.java        # /api/v1/quiz/**
+        │   ├── SearchController.java      # /api/v1/search/**
+        │   ├── SettingsController.java    # /api/v1/settings/**
+        │   ├── ProgressController.java    # /api/v1/progress/**
+        │   └── UserController.java        # /api/v1/users/**
+        ├── service/                  # Business logic interfaces + impls
+        │   ├── AiServerClient.java        # Gọi FastAPI (WebClient) — class quan trọng nhất
+        │   ├── AuthService.java / impl/AuthServiceImpl.java
+        │   ├── ChatService.java / impl/ChatServiceImpl.java
+        │   ├── NotebookService.java / impl/NotebookServiceImpl.java
+        │   ├── LegalDataService.java / impl/LegalDataServiceImpl.java
+        │   └── UserService.java / impl/UserServiceImpl.java
+        ├── entity/                   # MongoDB Documents
+        │   ├── User.java              # users collection (có embedded Progress + Settings)
+        │   ├── UserAuthSession.java   # user_auth_sessions (cookie session store)
+        │   ├── Notebook.java          # notebooks collection
+        │   ├── Message.java           # messages collection
+        │   ├── Law.java               # laws collection
+        │   ├── Clause.java            # clauses collection
+        │   ├── LegalTopic.java        # legal_topics collection
+        │   ├── Flashcard.java         # flashcards collection
+        │   └── QuizQuestion.java      # quiz_questions collection
+        ├── repository/               # Spring Data MongoDB Repositories
+        │   ├── UserRepository.java, UserAuthSessionRepository.java
+        │   ├── NotebookRepository.java, MessageRepository.java
+        │   ├── LawRepository.java, ClauseRepository.java
+        │   ├── LegalTopicRepository.java, FlashcardRepository.java
+        │   └── QuizQuestionRepository.java
+        ├── dto/
+        │   ├── request/              # LoginRequest, RegisterRequest, ChatRequest, NotebookRequest...
+        │   ├── response/             # ApiResponse<T>, UserResponse, SearchResponse
+        │   └── ai/                   # DTOs cho trao đổi với AI Server (LawInfo, LawCreateResponse...)
+        ├── security/
+        │   ├── CookieAuthenticationFilter.java  # Filter chính xác thực mỗi request
+        │   ├── CustomUserDetails.java            # Adapter User → UserDetails
+        │   └── CustomUserDetailsService.java
+        ├── mapper/                   # Entity ↔ DTO conversion (UserMapper...)
+        ├── exception/
+        │   ├── GlobalExceptionHandler.java       # @ControllerAdvice xử lý toàn bộ lỗi
+        │   ├── ResourceNotFoundException.java
+        │   └── UnauthorizedException.java
+        └── util/
+            └── CookieUtils.java      # Tạo/đọc/xóa cookie SESSION_ID
+```
+
+---
+
+## 🗺 3. API Endpoints
+
+| Controller | Route prefix | Auth yêu cầu |
+|---|---|---|
+| `AuthController` | `/api/v1/auth/**` | **Public** |
+| `AdminController` | `/api/v1/admin/**` | `ROLE_ADMIN` |
+| `NotebookController` | `/api/v1/notebooks/**` | Authenticated |
+| `ChatController` | `/api/v1/chat` | Authenticated |
+| `LegalDataController` | `/api/v1/legal/**` | Authenticated |
+| `FlashcardController` | `/api/v1/flashcards/**` | Authenticated |
+| `QuizController` | `/api/v1/quiz/**` | Authenticated |
+| `SearchController` | `/api/v1/search/**` | Authenticated |
+| `SettingsController` | `/api/v1/settings/**` | Authenticated |
+| `ProgressController` | `/api/v1/progress/**` | Authenticated |
+| `UserController` | `/api/v1/users/**` | Authenticated |
+
+### Auth endpoints chi tiết
+```
+POST /api/v1/auth/register    — Đăng ký tài khoản mới
+POST /api/v1/auth/login       — Đăng nhập, set cookie SESSION_ID
+POST /api/v1/auth/logout      — Xóa session + cookie
+GET  /api/v1/auth/me          — Lấy thông tin user hiện tại
+```
+
+### Notebook + Chat
+```
+GET    /api/v1/notebooks               — Lấy danh sách notebook của user
+POST   /api/v1/notebooks               — Tạo notebook mới
+PUT    /api/v1/notebooks/{id}          — Cập nhật notebook
+DELETE /api/v1/notebooks/{id}          — Xóa notebook
+GET    /api/v1/notebooks/{id}/messages — Lấy lịch sử chat
+DELETE /api/v1/notebooks/{id}/messages — Xóa lịch sử chat
+GET    /api/v1/notebooks/{id}/suggestions — Lấy gợi ý câu hỏi
+POST   /api/v1/chat                    — Gửi tin nhắn (gọi AI Server)
+```
+
+### Admin (ROLE_ADMIN)
+```
+GET    /api/v1/admin/laws              — Liệt kê tất cả Law từ Weaviate
+POST   /api/v1/admin/laws              — Tạo Law mới từ file PDF (upload)
+POST   /api/v1/admin/laws/{uuid}/files — Thêm file PDF vào Law có sẵn
+DELETE /api/v1/admin/laws/{uuid}       — Xóa Law + toàn bộ LawChunk (cascade)
+DELETE /api/v1/admin/documents         — Xóa document chunks khỏi Weaviate
+GET    /api/v1/admin/ai-health         — Kiểm tra trạng thái AI Server
+```
+
+---
+
+## 🔐 4. Cơ chế Xác thực (Cookie Session)
+
+> **KHÔNG dùng JWT.** Hệ thống dùng **Cookie Session tự quản lý** lưu trong MongoDB.
+
+**Luồng đăng nhập:**
+1. `POST /auth/login` → Tạo `UserAuthSession` trong MongoDB, set cookie `SESSION_ID` (HttpOnly, 7 ngày).
+2. Mỗi request → `CookieAuthenticationFilter` đọc cookie, tìm session trong MongoDB, nếu hợp lệ → inject `CustomUserDetails` vào `SecurityContext`.
+3. `POST /auth/logout` → Xóa session trong MongoDB + clear cookie.
+
+**Lấy user trong controller:**
+```java
+@AuthenticationPrincipal CustomUserDetails userDetails
+// userDetails.getId()    → userId (MongoDB _id)
+// userDetails.getUser()  → User entity đầy đủ
+```
+
+---
+
+## 🤖 5. Tích hợp AI Server (`AiServerClient.java`)
+
+> `AiServerClient` là class trung tâm kết nối tới **FastAPI AI Server** tại `http://localhost:8000`.
+
+- Dùng **Spring WebFlux WebClient** (không phải RestTemplate).
+- Timeout: 30s cho request thường, 120s cho streaming.
+- Tất cả giao tiếp Admin (upload PDF, quản lý Law) đều đi qua class này.
+- **Weaviate là nguồn sự thật** cho Law data — không lưu Law trong MongoDB.
+
+---
+
+## 📐 6. Patterns & Quy tắc code
+
+- **Response format chuẩn:** Mọi controller trả về `ApiResponse<T>`:
+  ```java
+  return ApiResponse.success(data);  // { status: "success", data: ... }
+  return ApiResponse.error("msg", 401); // { status: "error", error: { message, code } }
+  ```
+- **Service pattern:** Interface + Impl riêng biệt (VD: `AuthService` / `AuthServiceImpl`).
+- **Lombok bắt buộc:** Dùng `@Data`, `@Builder`, `@RequiredArgsConstructor` trên mọi class.
+- **MongoDB Entity:** Dùng `@Document(collection = "...")`, `@Id` cho `String id`.
+- **Validation:** Dùng `@Valid` trên `@RequestBody` + annotation trên DTO field.
+- **Exception:** Throw `ResourceNotFoundException` hoặc `UnauthorizedException` — `GlobalExceptionHandler` tự bắt và format response.
+
+---
+
+## ⚙️ 7. Cấu hình quan trọng (`application.properties`)
+
+```properties
+server.port=8080
+spring.data.mongodb.uri=mongodb://localhost:27017/legal_assistant_db
+auth.cookie.name=SESSION_ID
+auth.cookie.max-age=604800          # 7 ngày
+ai-server.base-url=http://localhost:8000
+ai-server.timeout=30000
+ai-server.stream-timeout=120000
+spring.servlet.multipart.max-file-size=50MB
+```
+
+---
+
+## 🚀 8. Chạy dự án
+
+```bash
+# Chạy backend (cần MongoDB đang chạy ở localhost:27017)
+./mvnw spring-boot:run
+
+# Hoặc build jar rồi chạy
+./mvnw clean package -DskipTests
+java -jar target/backend-0.0.1-SNAPSHOT.jar
+```
+
+> **Phụ thuộc khi chạy:** MongoDB (`localhost:27017`) + AI Server FastAPI (`localhost:8000`).
+
+---
+
+## 📋 9. Trạng thái hiện tại & Việc cần làm
+> ⚠️ **Cập nhật phần này trước mỗi lần kết thúc phiên làm việc!**
+
+### ✅ Đã hoàn thành
+- Toàn bộ tầng Security: Cookie Session, CookieAuthFilter, Role-based access
+- Auth: register, login, logout, getMe
+- Notebook CRUD + Messages + Suggestions
+- Chat endpoint (tích hợp AiServerClient)
+- Admin: Law management (CRUD + file upload → Weaviate)
+- `AiServerClient` — WebClient gọi FastAPI
+- GlobalExceptionHandler, response format chuẩn
+- **Chat mode routing**: `ChatRequest.mode` ('quick'/'agent') → `ChatServiceImpl` gọi đúng pipeline
+  - `quick` → `AiServerClient.query()` (POST `/api/v1/query/`)
+  - `agent` → `AiServerClient.agentQuery()` (POST `/api/v1/query/agent`)
+  - DTOs mới: `AgentQueryRequest`, `AgentQueryResponse` trong `dto/ai/`
+
+### 🔧 Đang làm / Cần kiểm tra
+- *(Cập nhật tại đây khi có)*
+
+### 📌 Việc cần làm tiếp theo
+- *(Cập nhật tại đây khi có)*

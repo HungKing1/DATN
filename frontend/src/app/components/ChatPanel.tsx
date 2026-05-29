@@ -3,18 +3,18 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Send, Mic, ImagePlus, ThumbsUp, ThumbsDown, Copy, RefreshCw,
   Sparkles, BarChart2, Zap, User, Bot, ChevronDown,
-  Plus, Check
+  Plus, Check, Brain
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useApp } from '../context/AppContext';
 import { MarkdownRenderer } from './MarkdownRenderer';
-import { Message } from '../types';
+import { Message, QueryMode } from '../types';
 
-function TypingIndicator() {
+function TypingIndicator({ mode }: { mode: QueryMode }) {
   return (
     <div className="flex items-end gap-2 mb-4">
       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center flex-shrink-0">
-        <Bot className="w-3.5 h-3.5 text-white" />
+        {mode === 'agent' ? <Brain className="w-3.5 h-3.5 text-white" /> : <Bot className="w-3.5 h-3.5 text-white" />}
       </div>
       <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
         <div className="flex items-center gap-1.5">
@@ -26,7 +26,14 @@ function TypingIndicator() {
               transition={{ duration: 0.8, delay: i * 0.15, repeat: Infinity }}
             />
           ))}
-          <span className="text-xs text-muted-foreground ml-2">AI is thinking...</span>
+          <span className="text-xs text-muted-foreground ml-2">
+            {mode === 'agent' ? 'Đang phân tích chuyên sâu...' : 'AI đang trả lời...'}
+          </span>
+          {mode === 'agent' && (
+            <span className="ml-1 px-1.5 py-0.5 bg-violet-100 text-violet-600 text-[10px] rounded-full font-medium">
+              Tư duy
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -89,47 +96,7 @@ function MessageBubble({ message, isStreaming, streamContent }: {
             />
           )}
 
-          {/* Citations */}
-          {!isStreaming && message.citations && message.citations.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-border/60">
-              <p className="text-xs text-muted-foreground mb-1.5">Sources:</p>
-              <div className="flex flex-wrap gap-2">
-                {message.citations.map((cit, idx) => (
-                  <span
-                    key={cit.id}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-muted/60 rounded-full text-xs text-muted-foreground border border-border/50"
-                  >
-                    <span
-                      className="w-4 h-4 bg-blue-100 dark:bg-blue-950/40 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0"
-                      style={{ fontSize: '9px' }}
-                    >
-                      {idx + 1}
-                    </span>
-                    <span className="truncate max-w-[140px]">
-                      {cit.lawName}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Confidence */}
-          {!isStreaming && message.confidence !== undefined && (
-            <div className="mt-2 flex items-center gap-1.5">
-              <Zap className="w-3 h-3 text-amber-500" />
-              <span className="text-xs text-muted-foreground">Confidence:</span>
-              <div className="h-1.5 w-16 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${message.confidence}%` }}
-                  transition={{ duration: 0.8, delay: 0.3 }}
-                  className="h-full rounded-full bg-gradient-to-r from-blue-500 to-violet-500"
-                />
-              </div>
-              <span className="text-xs text-emerald-600 dark:text-emerald-400">{message.confidence}%</span>
-            </div>
-          )}
         </div>
 
         {/* Actions */}
@@ -155,8 +122,8 @@ function MessageBubble({ message, isStreaming, streamContent }: {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 + idx * 0.05 }}
-                onClick={() => sendMessage(q)}
-                className="px-3 py-1.5 bg-card border border-border rounded-full text-xs text-muted-foreground hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-150"
+                onClick={() => sendMessage(q, 'quick')}
+                className="px-3 py-1.5 bg-card border border-border rounded-full text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-150"
               >
                 {q}
               </motion.button>
@@ -179,11 +146,11 @@ function NotebookSelector() {
   const [selectedEmoji, setSelectedEmoji] = useState('🧠');
 
   const NB_COLORS: Record<string, string> = {
-    blue: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300',
-    violet: 'bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300',
-    emerald: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300',
-    amber: 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300',
-    rose: 'bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300',
+    blue: 'bg-blue-100 text-blue-700',
+    violet: 'bg-violet-100 text-violet-700',
+    emerald: 'bg-emerald-100 text-emerald-700',
+    amber: 'bg-amber-100 text-amber-700',
+    rose: 'bg-rose-100 text-rose-700',
   };
 
   const handleCreate = () => {
@@ -222,9 +189,8 @@ function NotebookSelector() {
                   <button
                     key={nb.id}
                     onClick={() => { setActiveNotebookId(nb.id); setOpen(false); }}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${
-                      nb.id === activeNotebookId ? 'bg-blue-50 dark:bg-blue-950/30' : 'hover:bg-accent'
-                    }`}
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors ${nb.id === activeNotebookId ? 'bg-blue-50' : 'hover:bg-accent'
+                      }`}
                   >
                     <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${NB_COLORS[nb.color] ?? NB_COLORS.blue}`}>
                       {nb.emoji}
@@ -245,9 +211,8 @@ function NotebookSelector() {
                       <button
                         key={e}
                         onClick={() => setSelectedEmoji(e)}
-                        className={`w-6 h-6 rounded flex items-center justify-center text-sm transition-all ${
-                          selectedEmoji === e ? 'bg-blue-100 dark:bg-blue-950/40 ring-1 ring-blue-400' : 'hover:bg-accent'
-                        }`}
+                        className={`w-6 h-6 rounded flex items-center justify-center text-sm transition-all ${selectedEmoji === e ? 'bg-blue-100 ring-1 ring-blue-400' : 'hover:bg-accent'
+                          }`}
                       >
                         {e}
                       </button>
@@ -296,6 +261,7 @@ export function ChatPanel() {
     activeLawId, streamingMsgId, streamingContent
   } = useApp();
   const [input, setInput] = useState('');
+  const [queryMode, setQueryMode] = useState<QueryMode>('quick');
   const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -310,7 +276,7 @@ export function ChatPanel() {
   const handleSend = () => {
     const trimmed = input.trim();
     if (!trimmed || isAIThinking) return;
-    sendMessage(trimmed);
+    sendMessage(trimmed, queryMode);
     setInput('');
     inputRef.current?.focus();
   };
@@ -342,10 +308,10 @@ export function ChatPanel() {
         <div className="flex items-center gap-2">
           <NotebookSelector />
           {activeDoc && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-950/30 rounded-full border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 rounded-full border border-blue-200">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs text-blue-700 dark:text-blue-300 truncate max-w-[150px]">
-                {activeDoc.name}
+              <span className="text-xs text-blue-700 truncate max-w-[150px]">
+                {activeDoc.lawName}
               </span>
             </div>
           )}
@@ -357,11 +323,10 @@ export function ChatPanel() {
               <button
                 key={mode.id}
                 onClick={() => mode.path && navigate(mode.path)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all ${
-                  mode.id === 'chat'
-                    ? 'bg-white dark:bg-card shadow-sm text-foreground'
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all ${mode.id === 'chat'
+                    ? 'bg-white shadow-sm text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
-                }`}
+                  }`}
               >
                 {mode.icon}
                 <span className="hidden sm:inline">{mode.label}</span>
@@ -397,8 +362,8 @@ export function ChatPanel() {
                 {quickPrompts.map((prompt, idx) => (
                   <button
                     key={idx}
-                    onClick={() => sendMessage(prompt)}
-                    className="px-3 py-2.5 text-left bg-card border border-border rounded-xl text-xs text-muted-foreground hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-150"
+                    onClick={() => sendMessage(prompt, 'quick')}
+                    className="px-3 py-2.5 text-left bg-card border border-border rounded-xl text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-150"
                   >
                     {prompt}
                   </button>
@@ -415,7 +380,7 @@ export function ChatPanel() {
                   streamContent={msg.id === streamingMsgId ? streamingContent : undefined}
                 />
               ))}
-              {isAIThinking && <TypingIndicator />}
+              {isAIThinking && <TypingIndicator mode={queryMode} />}
               <div ref={messagesEndRef} />
             </>
           )}
@@ -424,7 +389,7 @@ export function ChatPanel() {
 
       {/* Input area */}
       <div className="px-4 pb-4 pt-2 flex-shrink-0">
-        <div className="relative bg-card border border-border rounded-2xl shadow-sm focus-within:border-blue-400 dark:focus-within:border-blue-600 focus-within:shadow-md transition-all duration-200">
+        <div className="relative bg-card border border-border rounded-2xl shadow-sm focus-within:border-blue-400 focus-within:shadow-md transition-all duration-200">
           <textarea
             ref={inputRef}
             value={input}
@@ -439,11 +404,10 @@ export function ChatPanel() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setIsRecording(p => !p)}
-                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
-                  isRecording
-                    ? 'bg-red-100 dark:bg-red-950/40 text-red-500 animate-pulse'
+                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${isRecording
+                    ? 'bg-red-100 text-red-500 animate-pulse'
                     : 'hover:bg-accent text-muted-foreground hover:text-foreground'
-                }`}
+                  }`}
                 title="Voice input"
               >
                 <Mic className="w-4 h-4" />
@@ -455,6 +419,34 @@ export function ChatPanel() {
                 <ImagePlus className="w-4 h-4" />
                 <input type="file" accept="image/*" className="hidden" />
               </label>
+
+              {/* Mode selector: Nhanh / Tư duy */}
+              <div className="flex items-center gap-0.5 ml-1 bg-muted rounded-full p-0.5">
+                <button
+                  id="chat-mode-quick"
+                  onClick={() => setQueryMode('quick')}
+                  title="Nhanh — RAG tiêu chuẩn"
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${queryMode === 'quick'
+                      ? 'bg-white shadow-sm text-blue-600'
+                      : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                  <Zap className="w-3 h-3" />
+                  <span>Nhanh</span>
+                </button>
+                <button
+                  id="chat-mode-agent"
+                  onClick={() => setQueryMode('agent')}
+                  title="Tư duy — Multi-Agent LangGraph"
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${queryMode === 'agent'
+                      ? 'bg-white shadow-sm text-violet-600'
+                      : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                  <Brain className="w-3 h-3" />
+                  <span>Tư duy</span>
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground hidden sm:block">
@@ -463,11 +455,10 @@ export function ChatPanel() {
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || isAIThinking}
-                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
-                  input.trim() && !isAIThinking
+                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${input.trim() && !isAIThinking
                     ? 'bg-gradient-to-br from-blue-500 to-violet-600 text-white hover:opacity-90 shadow-sm'
                     : 'bg-muted text-muted-foreground cursor-not-allowed'
-                }`}
+                  }`}
               >
                 <Send className="w-4 h-4" />
               </button>

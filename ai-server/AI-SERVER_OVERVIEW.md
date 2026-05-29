@@ -15,6 +15,7 @@
 - **LLM mặc định:** Groq (`openai/gpt-oss-120b`) — có thể đổi sang Google Gemini / OpenAI qua env var
 - **Embedding:** `sentence-transformers` (`all-MiniLM-L6-v2`, dim=384)
 - **Observability:** LangSmith tracing (cấu hình qua `.env`)
+- **Multi-Agent Framework:** LangGraph (Hỗ trợ xử lý song song nhiều Paralegal agents)
 
 **Khởi động server:**
 ```bash
@@ -66,6 +67,7 @@ ai-server/
     │   ├── models/
     │   │   ├── document.py       # DocumentChunk, ProcessedDocument, IngestionResult
     │   │   ├── query.py          # Query, RAGResponse, Citation, RankedResult, QueryType
+    │   │   ├── agent_state.py    # DeepAgentState, ResearchFinding, vv.
     │   │   ├── embedding.py      # Embedding value object
     │   │   └── collection_registry.py  # CollectionInfo (legacy, ít dùng)
     │   └── interfaces/
@@ -79,6 +81,11 @@ ai-server/
     │       └── context_builder.py      # ContextBuilder ABC
     │
     ├── application/
+    │   ├── agents/
+    │   │   ├── master_lawyer_agent.py # Node Master Agent: Quản lý task, tổng hợp
+    │   │   ├── paralegal_agent.py     # Node Paralegal Agent: Tra cứu Weaviate
+    │   │   ├── agent_tools.py         # Các LangChain tools cho Agent
+    │   │   └── __init__.py
     │   ├── dto/
     │   │   ├── ingestion_dto.py  # IngestionRequestDTO, IngestionResultDTO
     │   │   └── query_dto.py      # QueryDTO, RAGResponseDTO
@@ -87,7 +94,8 @@ ai-server/
     │   └── services/
     │       ├── ingestion_service.py  # IngestionService — orchestrate ingestion pipeline
     │       ├── query_service.py      # QueryService — route, rewrite, retrieve, rerank
-    │       └── rag_pipeline.py       # RAGPipeline — full RAG (standard + stream)
+    │       ├── rag_pipeline.py       # RAGPipeline — full RAG (standard + stream)
+    │       └── multi_agent_service.py# MultiAgentService — Orchestrate LangGraph workflow
     │
     ├── infrastructure/
     │   ├── embeddings/
@@ -114,14 +122,17 @@ ai-server/
     └── presentation/
         ├── controllers/
         │   ├── ingestion_controller.py  # IngestionController
-        │   └── query_controller.py      # QueryController (query, query_stream, query_reflect)
+        │   ├── query_controller.py      # QueryController (query, query_stream, query_reflect)
+        │   └── agent_controller.py      # AgentController (Multi-Agent RAG)
         ├── routes/
         │   ├── health_routes.py         # GET /health
         │   ├── ingestion_routes.py      # /api/v1/ingestion/*
-        │   └── query_routes.py          # /api/v1/query/*
+        │   ├── query_routes.py          # /api/v1/query/*
+        │   └── agent_routes.py          # /api/v1/query/agent
         ├── schemas/
         │   ├── ingestion_schemas.py     # Pydantic schemas for ingestion API
-        │   └── query_schemas.py         # QueryRequestSchema, QueryResponseSchema, ReflectionQueryRequestSchema
+        │   ├── query_schemas.py         # QueryRequestSchema, QueryResponseSchema, ReflectionQueryRequestSchema
+        │   └── agent_schemas.py         # AgentQueryRequest, AgentQueryResponse
         └── middlewares/
             ├── error_handler.py         # rag_exception_handler + generic_exception_handler
             └── logging_middleware.py    # LoggingMiddleware (request/response logging)
@@ -149,6 +160,7 @@ ai-server/
 | `POST` | `/` | Standard RAG query (sync JSON hoặc SSE nếu `stream=true`) |
 | `POST` | `/stream` | SSE streaming RAG query |
 | `POST` | `/reflect` | Reflection RAG — tự đánh giá và cải thiện câu trả lời |
+| `POST` | `/agent` | Multi-Agent RAG — dùng LangGraph chia task cho Paralegal tìm kiếm song song |
 
 ### Health
 
@@ -261,6 +273,41 @@ RAGResponse (answer + citations + metadata)
 
 ---
 
+## 7.5. Multi-Agent Pipeline (LangGraph)
+
+Hệ thống xử lý câu hỏi phức tạp (cần đối chiếu nhiều bộ luật) sử dụng LangGraph để điều phối các agents qua API `/api/v1/query/agent`:
+
+```text
+User Query
+    │
+    ▼
+MasterLawyerAgent (Node)
+    │   ├── Phân tích câu hỏi
+    │   ├── Gọi `write_todos()`
+    │   └── Gọi `delegate_task()` cho từng vấn đề pháp lý
+    │
+    ▼ (Send API - Parallel Execution)
+ParalegalAgent(s) (Node)
+    │   ├── Gọi `search_law_database()` (Hybrid Search: BM25 + Vector)
+    │   ├── Gọi `think_tool()` tự đánh giá kết quả
+    │   └── Trích xuất *NGUYÊN VĂN* điều luật đẩy vào State
+    │
+    ▼
+MasterLawyerAgent (Node)
+    │   ├── Gọi `read_research_findings()`
+    │   └── Tổng hợp và viết câu trả lời cuối (dựa trên raw text)
+    │
+    ▼
+AgentQueryResponse
+```
+
+**Tính năng nổi bật của Multi-Agent System:**
+- **Không ảo giác (No Hallucination):** Paralegal Agent bắt buộc chỉ được trích xuất nguyên văn luật từ Weaviate, không được phép tóm tắt hay paraphrase.
+- **Xử lý song song:** Nhờ Send API của LangGraph, Master có thể spawn (gọi) nhiều Paralegal Agent chạy cùng lúc, tra cứu nhiều khía cạnh pháp lý khác nhau một cách độc lập.
+- **Tối ưu Token Window:** Kết quả search thô từ Paralegal được lưu trực tiếp vào `DeepAgentState.research_findings` để Master đọc một lần ở bước cuối, tránh quá tải context window.
+
+---
+
 ## 8. Dependency Injection (Container)
 
 File `di/container.py` là **Composition Root duy nhất**. Mọi object đều được tạo ở đây theo pattern lazy singleton:
@@ -296,6 +343,8 @@ container.llm_provider()  # auto-select từ LLM_PROVIDER env var
 | `route_query_system` | LLM route query → law_uuid |
 | `rewrite_system` | LLM rewrite query cho retrieval |
 | `classify_system` | LLM classify query type |
+| `master_lawyer_system` | System prompt cho Master Lawyer Agent (phân tích task, lập TODOs, delegate) |
+| `paralegal_system` | System prompt cho Paralegal Agent (tra cứu Weaviate, trích xuất nguyên văn luật) |
 
 Để thêm prompt mới: `prompt_manager.register_template("my_key", "template {var}")`.
 
@@ -368,6 +417,7 @@ LANGCHAIN_PROJECT=rag_backend_dev
 | `weaviate-client>=4.0` | Vector DB client |
 | `pypdf` | PDF text extraction |
 | `langchain-text-splitters` | RecursiveCharacterTextSplitter |
+| `langgraph` | Multi-Agent Orchestration (StateGraph, Parallel nodes) |
 | `langsmith` | Tracing + observability |
 | `structlog` | Structured logging |
 | `httpx` | Async HTTP client |

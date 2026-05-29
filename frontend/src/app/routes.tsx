@@ -15,6 +15,8 @@ import { FlashcardMode } from './components/FlashcardMode';
 import { QuizMode } from './components/QuizMode';
 import { MindMapPage } from './components/MindMapPage';
 import { SettingsPage } from './components/SettingsPage';
+import { LegalDocumentPage } from './components/LegalDocumentPage';
+import { LegalDocumentViewer } from './components/LegalDocumentViewer';
 
 // New Pages
 import { LoginPage } from './pages/Auth/LoginPage';
@@ -71,6 +73,8 @@ export const router = createBrowserRouter([
       { path: 'quiz', Component: QuizMode },
       { path: 'mindmap', Component: MindMapPage },
       { path: 'settings', Component: SettingsPage },
+      { path: 'legal', Component: LegalDocumentPage },
+      { path: 'legal/:soKyHieu', Component: LegalDocumentViewer },
     ],
   },
 ]);

@@ -146,7 +146,7 @@ export function MindMapPage() {
             <Brain className="w-4 h-4 text-white" />
           </div>
           <span className="text-sm text-foreground">Knowledge Mind Map</span>
-          <span className="px-2 py-0.5 bg-cyan-50 dark:bg-cyan-950/30 text-cyan-600 dark:text-cyan-400 rounded-full text-xs border border-cyan-200 dark:border-cyan-800">
+          <span className="px-2 py-0.5 bg-cyan-50 text-cyan-600 rounded-full text-xs border border-cyan-200">
             7 documents
           </span>
           <span className="text-xs text-muted-foreground ml-1">Click level-1 nodes to expand/collapse</span>

@@ -1,5 +1,5 @@
 import { fetchApi } from './apiClient';
-import { Notebook, Message } from '../types';
+import { Notebook, Message, QueryMode } from '../types';
 
 export const chatService = {
   // Notebook operations
@@ -26,10 +26,16 @@ export const chatService = {
   getMessages: (notebookId: string) =>
     fetchApi<Message[]>(`/notebooks/${notebookId}/messages`),
 
-  sendMessage: (notebookId: string, content: string) =>
+  /**
+   * Send a message with an explicit query mode.
+   * @param notebookId - active notebook
+   * @param content    - user message text
+   * @param mode       - 'quick' → standard RAG | 'agent' → Multi-Agent LangGraph
+   */
+  sendMessage: (notebookId: string, content: string, mode: QueryMode = 'quick') =>
     fetchApi<Message>('/chat', {
       method: 'POST',
-      body: JSON.stringify({ notebookId, content })
+      body: JSON.stringify({ notebookId, content, mode })
     }),
 
   // Có thể dùng endpoint này để clear tin nhắn của 1 notebook bên trong DB

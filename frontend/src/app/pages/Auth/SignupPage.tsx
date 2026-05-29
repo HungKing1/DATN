@@ -88,7 +88,7 @@ export function SignupPage() {
         <button 
           type="submit" 
           disabled={loading}
-          className="w-full mt-2 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+          className="w-full mt-2 py-2.5 bg-gradient-to-br from-blue-500 to-violet-600 hover:opacity-90 disabled:opacity-50 text-white rounded-xl text-sm font-medium transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {loading ? 'Đang xử lý...' : 'Đăng ký tài khoản'}
         </button>

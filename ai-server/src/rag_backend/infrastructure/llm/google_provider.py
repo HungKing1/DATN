@@ -14,6 +14,19 @@ from rag_backend.domain.models.query import GenerationResult
 
 logger = logging.getLogger(__name__)
 
+def extract_text_from_message(content) -> str:
+    """Safely extract plain text from an AIMessage content which might be a list of blocks."""
+    if isinstance(content, str):
+        return content
+    
+    if isinstance(content, list):
+        return " ".join(
+            block.get("text", "") 
+            for block in content 
+            if isinstance(block, dict) and block.get("type") == "text"
+        )
+    
+    return str(content)
 
 class GoogleGeminiProvider(LLMProvider):
     """LLM provider wrapping LangChain's ChatGoogleGenerativeAI (Gemini).
@@ -24,7 +37,7 @@ class GoogleGeminiProvider(LLMProvider):
     Usage:
         provider = GoogleGeminiProvider(
             api_key="your-google-api-key",
-            model="gemini-1.5-pro",
+            model="gemini-3.1-flash-lite-preview",
         )
         result = await provider.generate("Hello, Gemini!")
     """
@@ -32,7 +45,7 @@ class GoogleGeminiProvider(LLMProvider):
     def __init__(
         self,
         api_key: str,
-        model: str = "gemini-1.5-pro",
+        model: str = "gemini-3.1-flash-lite-preview",
         temperature: float = 0.1,
         max_tokens: int = 2048,
     ) -> None:
@@ -76,7 +89,7 @@ class GoogleGeminiProvider(LLMProvider):
             token_usage = response.response_metadata.get("token_usage", {})
 
             return GenerationResult(
-                text=str(response.content),
+                text=extract_text_from_message(response.content),
                 model=self._model,
                 prompt_tokens=usage_metadata.get("input_tokens") or token_usage.get("prompt_tokens"),
                 completion_tokens=usage_metadata.get("output_tokens") or token_usage.get("completion_tokens"),
@@ -113,7 +126,7 @@ class GoogleGeminiProvider(LLMProvider):
 
             async for chunk in llm.astream(messages):
                 if chunk.content:
-                    yield str(chunk.content)
+                    yield extract_text_from_message(chunk.content)
 
         except Exception as e:
             raise LLMProviderError(
@@ -123,3 +136,6 @@ class GoogleGeminiProvider(LLMProvider):
 
     def get_model_name(self) -> str:
         return self._model
+
+    def get_underlying_model(self) -> Any:
+        return self._llm

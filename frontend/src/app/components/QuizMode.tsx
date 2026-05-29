@@ -90,21 +90,21 @@ export function QuizMode() {
     const base = 'w-full text-left px-4 py-3 rounded-xl border text-sm transition-all duration-200 ';
     if (answerState === 'unanswered') {
       return base + (selectedOption === idx
-        ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300'
-        : 'border-border bg-card hover:border-blue-200 dark:hover:border-blue-800 hover:bg-accent text-foreground cursor-pointer');
+        ? 'border-blue-400 bg-blue-50 text-blue-700'
+        : 'border-border bg-card hover:border-blue-200 hover:bg-accent text-foreground cursor-pointer');
     }
     if (idx === current.correctIndex) {
-      return base + 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400';
+      return base + 'border-emerald-400 bg-emerald-50 text-emerald-700';
     }
     if (idx === selectedOption && answerState === 'incorrect') {
-      return base + 'border-red-400 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400';
+      return base + 'border-red-400 bg-red-50 text-red-700';
     }
     return base + 'border-border bg-card text-muted-foreground opacity-60';
   };
 
   if (completed) {
     const grade = finalScore >= 80 ? 'Excellent!' : finalScore >= 60 ? 'Good job!' : 'Keep practicing!';
-    const gradeColor = finalScore >= 80 ? 'text-emerald-600 dark:text-emerald-400' : finalScore >= 60 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
+    const gradeColor = finalScore >= 80 ? 'text-emerald-600' : finalScore >= 60 ? 'text-amber-600' : 'text-red-600';
 
     return (
       <div className="h-full flex items-center justify-center bg-background">
@@ -233,7 +233,7 @@ export function QuizMode() {
             {/* Question */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">
-                <span className="px-2.5 py-0.5 bg-violet-100 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 rounded-full text-xs">
+                <span className="px-2.5 py-0.5 bg-violet-100 text-violet-700 rounded-full text-xs">
                   Q{currentIndex + 1}
                 </span>
               </div>
@@ -286,19 +286,19 @@ export function QuizMode() {
                 >
                   <div className={`p-4 rounded-xl border ${
                     answerState === 'correct'
-                      ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800'
-                      : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800'
+                      ? 'bg-emerald-50 border-emerald-200'
+                      : 'bg-amber-50 border-amber-200'
                   }`}>
                     <div className="flex items-center gap-2 mb-2">
                       {answerState === 'correct' ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                       ) : (
-                        <XCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                        <XCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
                       )}
                       <span className={`text-sm ${
                         answerState === 'correct'
-                          ? 'text-emerald-700 dark:text-emerald-400'
-                          : 'text-amber-700 dark:text-amber-400'
+                          ? 'text-emerald-700'
+                          : 'text-amber-700'
                       }`}>
                         {answerState === 'correct' ? 'Correct! 🎉' : 'Not quite right'}
                       </span>

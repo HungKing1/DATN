@@ -89,7 +89,7 @@ export function VideoModal() {
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-border">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-violet-100 dark:bg-violet-950/40 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
                 <Video className="w-4 h-4 text-violet-500" />
               </div>
               <h3 className="text-foreground">Generate Learning Video</h3>
@@ -124,15 +124,15 @@ export function VideoModal() {
                         onClick={() => setSelectedVoice(voice.id)}
                         className={`p-3 rounded-xl border text-left transition-all ${
                           selectedVoice === voice.id
-                            ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/30'
+                            ? 'border-blue-400 bg-blue-50'
                             : 'border-border hover:bg-accent'
                         }`}
                       >
                         <div className="flex items-center gap-2">
                           <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
                             voice.gender === 'Female'
-                              ? 'bg-pink-100 dark:bg-pink-950/30 text-pink-600'
-                              : 'bg-blue-100 dark:bg-blue-950/30 text-blue-600'
+                              ? 'bg-pink-100 text-pink-600'
+                              : 'bg-blue-100 text-blue-600'
                           }`}>
                             {voice.name[0]}
                           </div>
@@ -159,7 +159,7 @@ export function VideoModal() {
                         onClick={() => setSelectedLang(lang.code)}
                         className={`py-2 px-2 rounded-xl border text-center text-xs transition-all ${
                           selectedLang === lang.code
-                            ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300'
+                            ? 'border-blue-400 bg-blue-50 text-blue-700'
                             : 'border-border hover:bg-accent text-muted-foreground'
                         }`}
                       >
@@ -224,7 +224,7 @@ export function VideoModal() {
                           isDone
                             ? 'bg-emerald-500'
                             : isActive
-                            ? 'bg-violet-100 dark:bg-violet-950/40'
+                            ? 'bg-violet-100'
                             : 'bg-muted'
                         }`}>
                           {isDone ? (
@@ -276,9 +276,9 @@ export function VideoModal() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                  <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                <div className="flex items-center gap-2 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <p className="text-xs text-emerald-700">
                     Video generated successfully! Voice: {VOICES.find(v => v.id === selectedVoice)?.name},
                     Language: {LANGUAGES.find(l => l.code === selectedLang)?.name}
                   </p>

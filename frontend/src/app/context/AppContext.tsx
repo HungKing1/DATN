@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { Law, LegalTopic, Message, Citation, Notebook, Note, AppSettings } from '../types';
+import { Law, LegalTopic, Message, Citation, Notebook, Note, AppSettings, QueryMode } from '../types';
 
 import { legalService } from '../api/legalService';
 import { chatService } from '../api/chatService';
 import { settingsService } from '../api/settingsService';
+import { useAuth } from './AuthContext';
 
 interface AppContextValue {
   // Legal Knowledge Base
@@ -26,7 +27,7 @@ interface AppContextValue {
   isAIThinking: boolean;
   streamingMsgId: string | null;
   streamingContent: string;
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, mode?: QueryMode) => Promise<void>;
   clearChat: () => Promise<void>;
 
   // Citations
@@ -56,6 +57,7 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
   const [laws, setLaws] = useState<Law[]>([]);
   const [legalTopics, setLegalTopics] = useState<LegalTopic[]>([]);
   const [activeLawId, setActiveLawId] = useState<string | null>(null);
@@ -96,6 +98,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // INITIAL DATA FETCHING
   // ======================
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     // Tải dữ liệu ban đầu từ Backend
     const fetchInitialData = async () => {
       try {
@@ -117,11 +121,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         if (notebooksData.length > 0) {
           setNotebooks(notebooksData);
-          setActiveNotebookId(notebooksData[0].id);
-          // Lấy messages cho notebook đầu tiên
-          chatService.getMessages(notebooksData[0].id)
-            .then(msgs => setNotebookMessages(prev => ({ ...prev, [notebooksData[0].id]: msgs })))
-            .catch(() => {});
+          // Do not auto-select the first notebook so user sees the general "New Chat" page
+          setActiveNotebookId('');
         }
 
         if (settingsData) {
@@ -133,7 +134,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
 
     fetchInitialData();
-  }, []);
+  }, [isAuthenticated]);
 
   // Fetch messages whenever active notebook changes
   useEffect(() => {
@@ -192,8 +193,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [notebooks]);
 
   const sendMessage = useCallback(
-    async (content: string) => {
-      if (!activeNotebookId) return;
+    async (content: string, mode: QueryMode = 'quick') => {
+      let targetNbId = activeNotebookId;
+      
+      // Auto-create a new notebook if there is no active one
+      if (!targetNbId) {
+        try {
+          const newNb = await chatService.createNotebook('New Conversation', '💬');
+          setNotebooks(prev => [...prev, newNb]);
+          setNotebookMessages(prev => ({ ...prev, [newNb.id]: [] }));
+          setActiveNotebookId(newNb.id);
+          targetNbId = newNb.id;
+        } catch (e) {
+          console.error("Failed to auto-create notebook", e);
+          return;
+        }
+      }
 
       const userMsg: Message = {
         id: `msg-temp-${++messageIdCounter.current}`,
@@ -202,20 +217,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         timestamp: new Date().toISOString(),
       };
 
-      // Cập nhật giao diện ngưởi dùng ngay lập tức
+      // Cập nhật giao diện người dùng ngay lập tức
       setNotebookMessages(prev => ({
         ...prev,
-        [activeNotebookId]: [...(prev[activeNotebookId] ?? []), userMsg],
+        [targetNbId]: [...(prev[targetNbId] ?? []), userMsg],
       }));
       setNotebooks(prev =>
-        prev.map(nb => nb.id === activeNotebookId ? { ...nb, messageCount: nb.messageCount + 1 } : nb)
+        prev.map(nb => nb.id === targetNbId ? { ...nb, messageCount: nb.messageCount + 1 } : nb)
       );
       
       setIsAIThinking(true);
 
       try {
         // Gửi qua API
-        const responseMsg = await chatService.sendMessage(activeNotebookId, content);
+        const responseMsg = await chatService.sendMessage(targetNbId, content, mode);
         
         setIsAIThinking(false);
 
@@ -223,7 +238,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const uiAiMsg = { ...responseMsg, isStreaming: true };
         setNotebookMessages(prev => ({
           ...prev,
-          [activeNotebookId]: [...(prev[activeNotebookId] ?? []), uiAiMsg],
+          [targetNbId]: [...(prev[targetNbId] ?? []), uiAiMsg],
         }));
 
         if (responseMsg.citations) {

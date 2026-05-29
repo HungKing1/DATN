@@ -1,5 +1,4 @@
 import { ChatPanel } from './ChatPanel';
-import { ThemeToggle } from './ThemeToggle';
 import { Settings, Search } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router';
@@ -25,15 +24,13 @@ export function WorkspacePage() {
           </button>
 
           {/* Status pill */}
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-full">
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs text-emerald-700 dark:text-emerald-400">{readyDocs} sources active</span>
+            <span className="text-xs text-emerald-700">{readyDocs} sources active</span>
           </div>
         </div>
 
         <div className="flex items-center gap-1">
-          <ThemeToggle />
-
           <button
             onClick={() => navigate('/settings')}
             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent text-muted-foreground transition-colors"

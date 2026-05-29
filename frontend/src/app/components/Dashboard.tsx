@@ -45,7 +45,7 @@ function StatCard({
         {value}
       </div>
       <div className="text-sm text-muted-foreground mt-0.5">{label}</div>
-      {sub && <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">{sub}</div>}
+      {sub && <div className="text-xs text-emerald-600 mt-1">{sub}</div>}
     </motion.div>
   );
 }
@@ -53,7 +53,7 @@ function StatCard({
 function RecentLawRow({ name, number, status, date }: { name: string; number: string; status: string; date: string }) {
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-border/60 last:border-0">
-      <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center flex-shrink-0">
+      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
         <FileText className="w-4 h-4 text-blue-500" />
       </div>
       <div className="flex-1 min-w-0">
@@ -63,8 +63,8 @@ function RecentLawRow({ name, number, status, date }: { name: string; number: st
       <span
         className={`px-2 py-0.5 rounded-full text-xs ${
           status === 'active'
-            ? 'bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
-            : 'bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400'
+            ? 'bg-emerald-100 text-emerald-700'
+            : 'bg-amber-100 text-amber-700'
         }`}
       >
         {status === 'active' ? 'Active' : 'Draft'}
@@ -82,11 +82,11 @@ export function Dashboard() {
   const studyMins = stats.studyTimeMinutes % 60;
 
   const NB_COLORS: Record<string, string> = {
-    blue: 'bg-blue-100 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400',
-    violet: 'bg-violet-100 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400',
-    emerald: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400',
-    amber: 'bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400',
-    rose: 'bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400',
+    blue: 'bg-blue-100 text-blue-600',
+    violet: 'bg-violet-100 text-violet-600',
+    emerald: 'bg-emerald-100 text-emerald-600',
+    amber: 'bg-amber-100 text-amber-600',
+    rose: 'bg-rose-100 text-rose-600',
   };
 
   return (
@@ -104,9 +104,9 @@ export function Dashboard() {
               <p className="text-sm text-muted-foreground mt-0.5">Track your progress and study insights</p>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-950/30 dark:to-orange-950/30 rounded-full border border-amber-200 dark:border-amber-800">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-100 to-orange-100 rounded-full border border-amber-200">
                 <Flame className="w-4 h-4 text-amber-500" />
-                <span className="text-sm text-amber-700 dark:text-amber-400">7-day streak</span>
+                <span className="text-sm text-amber-700">7-day streak</span>
               </div>
             </div>
           </div>
@@ -119,7 +119,7 @@ export function Dashboard() {
             label="Documents Learned"
             value={stats.documentsLearned}
             sub="+2 this week"
-            color="bg-blue-100 dark:bg-blue-950/40"
+            color="bg-blue-100"
             delay={0}
           />
           <StatCard
@@ -127,7 +127,7 @@ export function Dashboard() {
             label="Flashcards Done"
             value={stats.flashcardsCompleted}
             sub="+12 today"
-            color="bg-violet-100 dark:bg-violet-950/40"
+            color="bg-violet-100"
             delay={0.05}
           />
           <StatCard
@@ -135,7 +135,7 @@ export function Dashboard() {
             label="Study Time"
             value={`${studyHours}h ${studyMins}m`}
             sub="This month"
-            color="bg-cyan-100 dark:bg-cyan-950/40"
+            color="bg-cyan-100"
             delay={0.1}
           />
           <StatCard
@@ -143,7 +143,7 @@ export function Dashboard() {
             label="Quizzes Passed"
             value={stats.quizzesCompleted}
             sub="Avg score 87%"
-            color="bg-emerald-100 dark:bg-emerald-950/40"
+            color="bg-emerald-100"
             delay={0.15}
           />
         </div>
@@ -162,7 +162,7 @@ export function Dashboard() {
                 <h3 className="text-foreground">Weekly Activity</h3>
                 <p className="text-xs text-muted-foreground">Study minutes per day</p>
               </div>
-              <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+              <div className="flex items-center gap-1 text-xs text-emerald-600">
                 <TrendingUp className="w-3.5 h-3.5" />
                 <span>+24% this week</span>
               </div>
@@ -317,10 +317,10 @@ export function Dashboard() {
             <h3 className="text-foreground mb-3">Quick Actions</h3>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: 'Start Quiz', icon: <Target className="w-5 h-5 text-violet-500" />, path: '/quiz', color: 'hover:bg-violet-50 dark:hover:bg-violet-950/20' },
-                { label: 'Flashcards', icon: <CreditCard className="w-5 h-5 text-blue-500" />, path: '/flashcards', color: 'hover:bg-blue-50 dark:hover:bg-blue-950/20' },
-                { label: 'Mind Map', icon: <Map className="w-5 h-5 text-cyan-500" />, path: '/mindmap', color: 'hover:bg-cyan-50 dark:hover:bg-cyan-950/20' },
-                { label: 'Ask AI', icon: <Zap className="w-5 h-5 text-amber-500" />, path: '/', color: 'hover:bg-amber-50 dark:hover:bg-amber-950/20' },
+                { label: 'Start Quiz', icon: <Target className="w-5 h-5 text-violet-500" />, path: '/quiz', color: 'hover:bg-violet-50' },
+                { label: 'Flashcards', icon: <CreditCard className="w-5 h-5 text-blue-500" />, path: '/flashcards', color: 'hover:bg-blue-50' },
+                { label: 'Mind Map', icon: <Map className="w-5 h-5 text-cyan-500" />, path: '/mindmap', color: 'hover:bg-cyan-50' },
+                { label: 'Ask AI', icon: <Zap className="w-5 h-5 text-amber-500" />, path: '/', color: 'hover:bg-amber-50' },
               ].map(action => (
                 <button
                   key={action.label}

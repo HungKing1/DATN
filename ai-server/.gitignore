@@ -13,3 +13,5 @@ __pycache__/
 ###
 postman_collection.json
 data
+images
+notebooks

@@ -370,6 +370,52 @@ class WeaviateRepository(VectorRepository):
                 f"search_chunks failed (law_uuid={law_uuid})", detail=str(e)
             ) from e
 
+    async def hybrid_search(
+        self,
+        query: str,
+        query_vector: list[float],
+        top_k: int = 10,
+        law_uuid: str | None = None,
+        alpha: float = 0.5,
+    ) -> list[RetrievalResult]:
+        """Hybrid search (BM25 + vector) on LawChunk collection."""
+        try:
+            client = await self._get_client()
+            if not client.collections.exists("LawChunk"):
+                return []
+            chunk_col = client.collections.get("LawChunk")
+
+            filters = None
+            if law_uuid:
+                filters = Filter.by_property("law_uuid").equal(law_uuid)
+
+            response = chunk_col.query.hybrid(
+                query=query,
+                vector=query_vector,
+                alpha=alpha,
+                limit=top_k,
+                filters=filters,
+                return_metadata=MetadataQuery(score=True),
+            )
+
+            return [
+                RetrievalResult(
+                    chunk_id=str(obj.uuid),
+                    content=obj.properties.get("content", ""),
+                    score=obj.metadata.score or 0.0,
+                    metadata={
+                        k: v for k, v in obj.properties.items() if k != "content"
+                    },
+                    document_id=obj.properties.get("document_id"),
+                )
+                for obj in response.objects
+            ]
+
+        except Exception as e:
+            raise VectorStoreError(
+                f"hybrid_search failed (law_uuid={law_uuid})", detail=str(e)
+            ) from e
+
     async def delete_law(self, law_uuid: str) -> dict:
         """Cascade-delete a Law and ALL its LawChunk objects.
 

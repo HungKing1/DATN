@@ -109,6 +109,26 @@ class VectorRepository(ABC):
         ...
 
     @abstractmethod
+    async def hybrid_search(
+        self,
+        query: str,
+        query_vector: list[float],
+        top_k: int = 10,
+        law_uuid: str | None = None,
+        alpha: float = 0.5,
+    ) -> list[RetrievalResult]:
+        """Hybrid search (BM25 + vector) on LawChunk collection.
+
+        Args:
+            query: The text query for BM25 search.
+            query_vector: The vector for dense search.
+            top_k: Number of results to return.
+            law_uuid: If provided, search only within that law's chunks.
+            alpha: Weight of vector search (0=BM25, 1=vector).
+        """
+        ...
+
+    @abstractmethod
     async def delete_law(self, law_uuid: str) -> dict:
         """Cascade-delete a Law and ALL its associated LawChunk objects.
 

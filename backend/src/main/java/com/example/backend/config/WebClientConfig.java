@@ -11,37 +11,69 @@ import reactor.netty.http.client.HttpClient;
 import java.time.Duration;
 
 /**
- * WebClient configuration for connecting to the AI Server (FastAPI RAG
- * Backend).
- * 
- * Configures timeouts, buffer sizes, and base URL for all internal HTTP calls.
+ * WebClient configuration for connecting to the AI Server (FastAPI RAG Backend).
+ *
+ * Provides TWO separate beans with different timeouts:
+ *  - {@code aiServerWebClient}      — 30s  for standard quick RAG queries
+ *  - {@code aiServerAgentWebClient} — 300s for Multi-Agent LangGraph queries (slower)
  */
 @Configuration
 public class WebClientConfig {
 
-        @Value("${ai-server.base-url}")
-        private String aiServerBaseUrl;
+    @Value("${ai-server.base-url}")
+    private String aiServerBaseUrl;
 
-        @Value("${ai-server.timeout}")
-        private int timeout;
+    /** Timeout for quick RAG queries (POST /api/v1/query/) — default 30s */
+    @Value("${ai-server.timeout:30000}")
+    private int quickTimeout;
 
-        @Bean
-        public WebClient aiServerWebClient() {
-                HttpClient httpClient = HttpClient.create()
-                                .responseTimeout(Duration.ofMillis(timeout));
+    /** Timeout for Multi-Agent queries (POST /api/v1/query/agent/) — default 300s */
+    @Value("${ai-server.agent-timeout:300000}")
+    private int agentTimeout;
 
-                // Increase buffer size for large RAG responses (16 MB)
-                ExchangeStrategies strategies = ExchangeStrategies.builder()
-                                .codecs(configurer -> configurer
-                                                .defaultCodecs()
-                                                .maxInMemorySize(16 * 1024 * 1024))
-                                .build();
+    /** Buffer size: 16 MB — shared config for both clients */
+    private ExchangeStrategies exchangeStrategies() {
+        return ExchangeStrategies.builder()
+                .codecs(configurer -> configurer
+                        .defaultCodecs()
+                        .maxInMemorySize(16 * 1024 * 1024))
+                .build();
+    }
 
-                return WebClient.builder()
-                                .baseUrl(aiServerBaseUrl)
-                                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                                .exchangeStrategies(strategies)
-                                .defaultHeader("Content-Type", "application/json")
-                                .build();
-        }
+    /**
+     * WebClient for quick RAG queries (standard pipeline).
+     * Timeout: {@code ai-server.timeout} (default 30s).
+     */
+    @Bean
+    public WebClient aiServerWebClient() {
+        HttpClient httpClient = HttpClient.create()
+                .responseTimeout(Duration.ofMillis(quickTimeout));
+
+        return WebClient.builder()
+                .baseUrl(aiServerBaseUrl)
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .exchangeStrategies(exchangeStrategies())
+                .defaultHeader("Content-Type", "application/json")
+                .build();
+    }
+
+    /**
+     * WebClient for Multi-Agent LangGraph queries.
+     * Timeout: {@code ai-server.agent-timeout} (default 300s).
+     *
+     * Agent mode spawns multiple Paralegal agents in parallel and requires
+     * significantly more time than a standard RAG query.
+     */
+    @Bean
+    public WebClient aiServerAgentWebClient() {
+        HttpClient httpClient = HttpClient.create()
+                .responseTimeout(Duration.ofMillis(agentTimeout));
+
+        return WebClient.builder()
+                .baseUrl(aiServerBaseUrl)
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .exchangeStrategies(exchangeStrategies())
+                .defaultHeader("Content-Type", "application/json")
+                .build();
+    }
 }

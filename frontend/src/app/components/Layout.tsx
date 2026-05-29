@@ -1,7 +1,6 @@
 import { Outlet, useLocation } from 'react-router';
 import { LeftSidebar } from './LeftSidebar';
 import { SourcePanel } from './SourcePanel';
-import { ThemeToggle } from './ThemeToggle';
 import { CommandPalette } from './CommandPalette';
 import { Settings, Search } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -46,8 +45,6 @@ export function Layout() {
               </button>
             </div>
             <div className="flex items-center gap-1.5">
-              <ThemeToggle />
-
               <button
                 onClick={() => navigate('/settings')}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent text-muted-foreground transition-colors"

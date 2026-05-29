@@ -1,8 +1,8 @@
 package com.example.backend.service;
 
 import com.example.backend.dto.ai.*;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
@@ -30,10 +30,20 @@ import java.util.Map;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AiServerClient {
 
+    /** WebClient with 30s timeout — used for quick RAG queries. */
     private final WebClient aiServerWebClient;
+
+    /** WebClient with 300s timeout — used for Multi-Agent LangGraph queries. */
+    private final WebClient aiServerAgentWebClient;
+
+    public AiServerClient(
+            @Qualifier("aiServerWebClient") WebClient aiServerWebClient,
+            @Qualifier("aiServerAgentWebClient") WebClient aiServerAgentWebClient) {
+        this.aiServerWebClient = aiServerWebClient;
+        this.aiServerAgentWebClient = aiServerAgentWebClient;
+    }
 
     // ═══════════════════════════════════════════════════════════
     // QUERY ENDPOINTS
@@ -88,6 +98,36 @@ public class AiServerClient {
                 .doOnError(e -> log.error("Streaming query error: {}", e.getMessage()));
     }
 
+    /**
+     * Execute a Multi-Agent RAG query using LangGraph orchestration.
+     * Pipeline: MasterLawyerAgent → parallel ParalegalAgents (Weaviate hybrid search) → synthesize answer.
+     *
+     * @param request the agent query parameters (query + top_k + max_paralegal_agents)
+     * @return AgentQueryResponse with synthesized answer and raw research findings
+     */
+    public AgentQueryResponse agentQuery(AgentQueryRequest request) {
+        log.info("Sending Multi-Agent RAG query to AI Server: {}", request.getQuestion());
+
+        try {
+            AgentQueryResponse response = aiServerAgentWebClient.post()  // 300s timeout
+                    .uri("/api/v1/query/agent/")   // trailing slash required by FastAPI router
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(AgentQueryResponse.class)
+                    .block();
+
+            log.info("Multi-Agent RAG query completed. Iterations: {}",
+                    response != null ? response.getIterations() : 0);
+            return response;
+
+        } catch (WebClientResponseException e) {
+            log.error("AI Server returned error for agent query: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("AI Server agent query failed: " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Failed to connect to AI Server for agent query: {}", e.getMessage());
+            throw new RuntimeException("AI Server is unavailable. Please try again later.", e);
+        }
+    }
 
 
     // ═══════════════════════════════════════════════════════════

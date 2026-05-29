@@ -75,13 +75,13 @@ export function SourcePanel() {
                           onClick={() => setActiveChunk(isActive ? null : citation.id)}
                           className={`rounded-xl border cursor-pointer transition-all duration-200 overflow-hidden ${
                             isActive
-                              ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-950/20 shadow-sm'
-                              : 'border-border hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-sm'
+                              ? 'border-blue-300 bg-blue-50/50 shadow-sm'
+                              : 'border-border hover:border-blue-200 hover:shadow-sm'
                           }`}
                         >
                           <div className="flex items-start gap-2 p-3 pb-2">
-                            <div className="w-5 h-5 rounded bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <span className="text-xs text-blue-600 dark:text-blue-400">{idx + 1}</span>
+                            <div className="w-5 h-5 rounded bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-xs text-blue-600">{idx + 1}</span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1 mb-0.5">
@@ -105,7 +105,7 @@ export function SourcePanel() {
                           <div className="px-3 pb-3">
                             <div className={`text-xs leading-relaxed text-muted-foreground rounded-lg p-2.5 transition-all ${
                               isActive
-                                ? 'bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 text-foreground'
+                                ? 'bg-yellow-50 border border-yellow-200 text-foreground'
                                 : 'bg-muted/50 line-clamp-3'
                             }`}>
                               {citation.text}
@@ -129,7 +129,7 @@ export function SourcePanel() {
                         {['Explain', 'Simplify', 'Translate'].map(action => (
                           <button
                             key={action}
-                            className="px-2.5 py-1 bg-card border border-border rounded-full text-xs text-foreground hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-800 transition-colors"
+                            className="px-2.5 py-1 bg-card border border-border rounded-full text-xs text-foreground hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
                           >
                             {action}
                           </button>

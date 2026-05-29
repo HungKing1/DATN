@@ -6,11 +6,11 @@ import { flashcardService } from '../api/flashcardService';
 import { Flashcard } from '../types';
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Training: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300',
-  Transformers: 'bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300',
-  Fundamentals: 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300',
-  Architectures: 'bg-cyan-100 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300',
-  Techniques: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300',
+  Training: 'bg-blue-100 text-blue-700',
+  Transformers: 'bg-violet-100 text-violet-700',
+  Fundamentals: 'bg-amber-100 text-amber-700',
+  Architectures: 'bg-cyan-100 text-cyan-700',
+  Techniques: 'bg-emerald-100 text-emerald-700',
 };
 
 function FlipCard({ front, back, category }: { front: string; back: string; category: string }) {
@@ -50,7 +50,7 @@ function FlipCard({ front, back, category }: { front: string; back: string; cate
             height: '100%',
             transform: 'rotateY(180deg)',
           }}
-          className="bg-gradient-to-br from-blue-50 to-violet-50 dark:from-blue-950/20 dark:to-violet-950/20 border-2 border-blue-200 dark:border-blue-800 rounded-3xl p-8 flex flex-col items-center justify-center shadow-lg"
+          className="bg-gradient-to-br from-blue-50 to-violet-50 border-2 border-blue-200 rounded-3xl p-8 flex flex-col items-center justify-center shadow-lg"
         >
           <Zap className="w-6 h-6 text-blue-500 mb-3" />
           <p className="text-center text-foreground leading-relaxed text-sm">{back}</p>
@@ -162,17 +162,17 @@ export function FlashcardMode() {
           <p className="text-sm text-muted-foreground mb-6">You've gone through all {cards.length} cards</p>
 
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3 border border-emerald-200 dark:border-emerald-800">
-              <div className="text-emerald-700 dark:text-emerald-400" style={{ fontSize: '1.8rem', fontWeight: 700 }}>
+            <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200">
+              <div className="text-emerald-700" style={{ fontSize: '1.8rem', fontWeight: 700 }}>
                 {knownIds.size}
               </div>
-              <p className="text-xs text-emerald-600 dark:text-emerald-500">Got it ✓</p>
+              <p className="text-xs text-emerald-600">Got it ✓</p>
             </div>
-            <div className="bg-red-50 dark:bg-red-950/20 rounded-xl p-3 border border-red-200 dark:border-red-800">
-              <div className="text-red-700 dark:text-red-400" style={{ fontSize: '1.8rem', fontWeight: 700 }}>
+            <div className="bg-red-50 rounded-xl p-3 border border-red-200">
+              <div className="text-red-700" style={{ fontSize: '1.8rem', fontWeight: 700 }}>
                 {unknownIds.size}
               </div>
-              <p className="text-xs text-red-600 dark:text-red-500">Need review ✗</p>
+              <p className="text-xs text-red-600">Need review ✗</p>
             </div>
           </div>
 
@@ -216,7 +216,7 @@ export function FlashcardMode() {
         <div className="flex items-center gap-2">
           <BookOpen className="w-4 h-4 text-blue-500" />
           <span className="text-sm text-foreground">Flashcard Study</span>
-          <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-full text-xs">
+          <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-xs">
             {cards.length} cards
           </span>
         </div>
@@ -286,14 +286,14 @@ export function FlashcardMode() {
         <div className="flex items-center gap-2">
           <button
             onClick={markUnknown}
-            className="flex items-center gap-2 px-5 py-2.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-sm hover:bg-red-100 dark:hover:bg-red-950/30 transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm hover:bg-red-100 transition-colors"
           >
             <X className="w-4 h-4" />
             Still learning
           </button>
           <button
             onClick={markKnown}
-            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-sm hover:bg-emerald-100 transition-colors"
           >
             <Check className="w-4 h-4" />
             Got it!

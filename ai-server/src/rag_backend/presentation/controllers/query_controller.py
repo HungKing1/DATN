@@ -5,13 +5,14 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator
 
-from rag_backend.application.dto.evaluation_dto import ReflectionRAGResponse
 from rag_backend.application.services.rag_pipeline import RAGPipeline
 from rag_backend.domain.models.query import Query, RAGResponse
 from rag_backend.presentation.schemas.query_schemas import (
     CitationSchema,
     QueryRequestSchema,
     QueryResponseSchema,
+    ReflectionQueryRequestSchema,
+    ReflectionQueryResponseSchema,
 )
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,32 @@ class QueryController:
             yield token
 
 
+    # ── Reflection RAG ──────────────────────────────────────
+
+    async def query_reflect(
+        self,
+        request: ReflectionQueryRequestSchema,
+    ) -> ReflectionQueryResponseSchema:
+        """Process a RAG query with iterative reflection.
+
+        NOTE: Full reflection loop not yet implemented.
+        Falls back to a single standard RAG pass.
+        """
+        query = self._build_query(request.query, request)
+
+        result = await self._pipeline.run(  # type: ignore
+            query=query,
+            use_rewrite=request.use_query_rewrite,
+            use_reranker=request.use_reranker,
+            max_context_tokens=request.max_context_tokens,
+        )
+
+        base = self._to_response(result)
+        return ReflectionQueryResponseSchema(
+            **base.model_dump(),
+            reflection_iterations=0,
+            reflection_log=[],
+        )
 
     # ── Helpers ─────────────────────────────────────────────
 

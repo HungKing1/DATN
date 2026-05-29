@@ -132,12 +132,7 @@
   border-radius: 999px;
 }
 
-/* Smooth transitions for theme */
-*,
-*::before,
-*::after {
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
+/* No theme transitions needed — light mode only */
 
 /* Override transition for interactive elements to be instant */
 button,

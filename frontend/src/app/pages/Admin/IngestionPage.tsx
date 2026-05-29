@@ -55,17 +55,17 @@ function StatusBadge({ status }: { status: IndexingStatus }) {
     ready: {
       label: 'Ready',
       icon: <CheckCircle2 className="w-3 h-3" />,
-      cls: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+      cls: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600',
     },
     processing: {
       label: 'Processing',
       icon: <Clock className="w-3 h-3 animate-spin" />,
-      cls: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400',
+      cls: 'border-amber-500/30 bg-amber-500/10 text-amber-600',
     },
     failed: {
       label: 'Failed',
       icon: <AlertCircle className="w-3 h-3" />,
-      cls: 'border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400',
+      cls: 'border-red-500/30 bg-red-500/10 text-red-600',
     },
   };
   const { label, icon, cls } = cfg[status];
@@ -304,10 +304,10 @@ export function IngestionPage() {
                 id="mode-new"
                 onClick={() => setMode('new')}
                 className={cn(
-                  'flex-1 px-3 py-2 text-sm rounded-lg border transition-colors',
+                  'flex-1 px-3 py-2 text-sm rounded-xl border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   mode === 'new'
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'border-border bg-muted/30 text-foreground hover:bg-muted/50',
+                    ? 'bg-gradient-to-br from-blue-500 to-violet-600 text-white border-transparent shadow-sm hover:opacity-90'
+                    : 'border-border bg-muted/30 text-foreground hover:bg-muted/50 hover:text-accent-foreground',
                 )}
               >
                 <Plus className="w-3.5 h-3.5 inline mr-1.5" />
@@ -317,10 +317,10 @@ export function IngestionPage() {
                 id="mode-existing"
                 onClick={() => setMode('existing')}
                 className={cn(
-                  'flex-1 px-3 py-2 text-sm rounded-lg border transition-colors',
+                  'flex-1 px-3 py-2 text-sm rounded-xl border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   mode === 'existing'
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'border-border bg-muted/30 text-foreground hover:bg-muted/50',
+                    ? 'bg-gradient-to-br from-blue-500 to-violet-600 text-white border-transparent shadow-sm hover:opacity-90'
+                    : 'border-border bg-muted/30 text-foreground hover:bg-muted/50 hover:text-accent-foreground',
                 )}
               >
                 <Scale className="w-3.5 h-3.5 inline mr-1.5" />
@@ -449,10 +449,14 @@ export function IngestionPage() {
             <h2 className="text-sm font-semibold text-foreground">Tài liệu đã upload</h2>
             <Badge variant="secondary" className="font-normal">{documents.length}</Badge>
           </div>
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
+          <button 
+            onClick={handleRefresh} 
+            disabled={refreshing}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Đang tải...' : 'Làm mới'}
-          </Button>
+          </button>
         </div>
 
         {documents.length === 0 ? (
