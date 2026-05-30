@@ -40,13 +40,24 @@ class DefaultContextBuilder(ContextBuilder):
                 remaining_chars = int(remaining_tokens / tokens_per_char)
                 if remaining_chars > 100:
                     truncated = result.content[:remaining_chars] + "..."
-                    source = result.metadata.get("source", "unknown")
+                    
+                    # Build source string from metadata
+                    so_ky_hieu = result.metadata.get("so_ky_hieu", "unknown")
+                    dieu_numbers = result.metadata.get("dieu_numbers", [])
+                    dieu_str = f" - Điều {', '.join(map(str, dieu_numbers))}" if dieu_numbers else ""
+                    source = f"{so_ky_hieu}{dieu_str}"
+                    
                     context_parts.append(
                         f"[Source {i + 1}: {source}]\n{truncated}"
                     )
                 break
 
-            source = result.metadata.get("source", "unknown")
+            # Build source string from metadata
+            so_ky_hieu = result.metadata.get("so_ky_hieu", "unknown")
+            dieu_numbers = result.metadata.get("dieu_numbers", [])
+            dieu_str = f" - Điều {', '.join(map(str, dieu_numbers))}" if dieu_numbers else ""
+            source = f"{so_ky_hieu}{dieu_str}"
+            
             context_parts.append(
                 f"[Source {i + 1}: {source}]\n{result.content}"
             )
