@@ -108,12 +108,8 @@ ai-server/
     │   │   └── legal_article_chunker.py  # LegalArticleChunker (theo ranh giới Điều luật)
     │   ├── mongodb/
     │   │   └── mongodb_legal_reader.py   # MongoDBLegalReader — đọc legal_documents + legal_articles
-    │   ├── reranking/
-    │   │   └── cross_encoder_reranker.py  # CrossEncoderReranker (cross-encoder/ms-marco-*)
-    │   ├── multimodal/                # Placeholder (chưa implement)
-    │   └── query/
-    │       ├── llm_query_rewriter.py      # LLMQueryRewriter — rewrite query với LLM
-    │       └── default_context_builder.py # DefaultContextBuilder — build context string
+    │   └── reranking/
+    │       └── cross_encoder_reranker.py  # CrossEncoderReranker (cross-encoder/ms-marco-*)
     │
     └── presentation/
         ├── controllers/
@@ -123,11 +119,9 @@ ai-server/
         ├── routes/
         │   ├── health_routes.py         # GET /health
         │   ├── ingestion_routes.py      # /api/v1/ingestion/*
-        │   ├── query_routes.py          # /api/v1/query/*
         │   └── agent_routes.py          # /api/v1/query/agent
         ├── schemas/
         │   ├── ingestion_schemas.py     # MongoIngestionRequest, IngestionResultDto, LawListResponse
-        │   ├── query_schemas.py         # QueryRequestSchema, QueryResponseSchema
         │   └── agent_schemas.py         # AgentQueryRequest, AgentQueryResponse
         └── middlewares/
             ├── error_handler.py         # rag_backend_exception_handler
@@ -151,7 +145,6 @@ ai-server/
 
 | Method | Path | Mô tả |
 |--------|------|--------|
-| `POST` | `/` | Standard RAG query (sync JSON) |
 | `POST` | `/agent` | Multi-Agent RAG — dùng LangGraph chia task cho Paralegal tìm kiếm song song |
 
 ### Health
@@ -233,57 +226,9 @@ WeaviateRepository.store_legal_chunks(chunks)
 
 ---
 
-## 7. Query Pipeline (RAGPipeline)
+## 7. Multi-Agent Pipeline (LangGraph)
 
-```
-User Query
-    │
-    ▼
-LLMQueryRewriter.rewrite()      [LLM] (optional, use_rewrite=True)
-    → query được viết lại cho retrieval tốt hơn
-    │
-    ▼
-QueryService._extract_so_ky_hieu(query)
-    → Regex extract "XX/YYYY/QHZZ" từ query nếu có
-    → None nếu không tìm thấy → global search trên tất cả chunks
-    │
-    ▼
-EmbeddingProvider.embed_text(query)
-    │
-    ▼
-WeaviateRepository.hybrid_search(query, vector, so_ky_hieu=...)
-    → Weaviate hybrid search (BM25 + vector, alpha=0.5)
-    → Filter by so_ky_hieu nếu có, global nếu không
-    → top_k=20 results
-    │
-    ▼
-QueryService._expand_split_chunks(results)
-    → Nếu chunk is_split=True → fetch đủ parts → merge content
-    │
-    ▼
-CrossEncoderReranker.rerank()   (optional, use_reranker=True)
-    → cross-encoder/ms-marco-MiniLM-L-6-v2
-    → top_k=5 results
-    │
-    ▼
-DefaultContextBuilder.build()
-    → format chunks thành context string
-    │
-    ▼
-PromptManager.get_prompt("rag_system") + get_prompt("rag_user")
-    │
-    ▼
-LLMProvider.generate()
-    │
-    ▼
-RAGResponse (answer + citations + metadata)
-```
-
----
-
-## 7.5. Multi-Agent Pipeline (LangGraph)
-
-Hệ thống xử lý câu hỏi phức tạp (cần đối chiếu nhiều bộ luật) sử dụng LangGraph để điều phối các agents qua API `/api/v1/query/agent`:
+Hệ thống xử lý câu hỏi pháp luật sử dụng LangGraph để điều phối các agents qua API `/api/v1/query/agent`:
 
 ```text
 User Query
@@ -367,11 +312,7 @@ File `di/container.py` là **Composition Root duy nhất**. Mọi object đều 
 | `chunking_strategy()` | `LegalArticleChunker` | Chunker theo Điều luật |
 | `mongo_reader()` | `MongoDBLegalReader` | Đọc MongoDB |
 | `reranker()` | `CrossEncoderReranker` | Cross-encoder reranker |
-| `query_rewriter()` | `LLMQueryRewriter` | LLM query rewriter |
-| `context_builder()` | `DefaultContextBuilder` | Context string builder |
 | `ingestion_service()` | `IngestionService` | Orchestrate ingestion |
-| `query_service()` | `QueryService` | Orchestrate query |
-| `rag_pipeline()` | `RAGPipeline` | Full RAG pipeline |
 
 ---
 
@@ -381,11 +322,6 @@ File `di/container.py` là **Composition Root duy nhất**. Mọi object đều 
 
 | Template Key | Dùng cho |
 |---|---|
-| `rag_system` | System prompt cho RAG generation |
-| `rag_user` | User prompt với context + query |
-| `evaluation` | LLM-as-Judge đánh giá câu trả lời |
-| `rewrite_system` | LLM rewrite query cho retrieval |
-| `classify_system` | LLM classify query type |
 | `master_lawyer_system` | System prompt cho Master Lawyer Agent |
 | `paralegal_system` | System prompt cho Paralegal Agent |
 

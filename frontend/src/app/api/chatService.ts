@@ -1,5 +1,5 @@
 import { fetchApi } from './apiClient';
-import { Conversation, Message, QueryMode } from '../types';
+import { Conversation, Message } from '../types';
 
 export const chatService = {
   // Conversation operations
@@ -27,14 +27,13 @@ export const chatService = {
     fetchApi<Message[]>(`/conversations/${conversationId}/messages`),
 
   /**
-   * Send a message with an explicit query mode.
+   * Send a message to Multi-Agent LangGraph pipeline.
    * @param conversationId - active conversation
    * @param content    - user message text
-   * @param mode       - 'quick' → standard RAG | 'agent' → Multi-Agent LangGraph
    */
-  sendMessage: (conversationId: string, content: string, mode: QueryMode = 'quick') =>
+  sendMessage: (conversationId: string, content: string) =>
     fetchApi<Message>('/chat', {
       method: 'POST',
-      body: JSON.stringify({ conversationId, content, mode })
+      body: JSON.stringify({ conversationId, content })
     })
 };

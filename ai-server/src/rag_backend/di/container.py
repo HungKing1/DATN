@@ -6,15 +6,11 @@ import logging
 
 from rag_backend.application.prompt.prompt_manager import PromptManager
 from rag_backend.application.services.ingestion_service import IngestionService
-from rag_backend.application.services.query_service import QueryService
-from rag_backend.application.services.rag_pipeline import RAGPipeline
 from rag_backend.config.settings import LLMProviderType, Settings
 
 from rag_backend.domain.interfaces.chunking_strategy import ChunkingStrategy
-from rag_backend.domain.interfaces.context_builder import ContextBuilder
 from rag_backend.domain.interfaces.embedding_provider import EmbeddingProvider
 from rag_backend.domain.interfaces.llm_provider import LLMProvider
-from rag_backend.domain.interfaces.query_rewriter import QueryRewriter
 from rag_backend.domain.interfaces.reranker import Reranker
 from rag_backend.domain.interfaces.vector_repository import VectorRepository
 
@@ -26,8 +22,6 @@ from rag_backend.infrastructure.embeddings.sentence_transformer_provider import 
 from rag_backend.infrastructure.mongodb.mongodb_legal_reader import MongoDBLegalReader
 from rag_backend.infrastructure.llm.langchain_provider import LangChainOpenAIProvider
 from rag_backend.infrastructure.llm.google_provider import GoogleGeminiProvider
-from rag_backend.infrastructure.query.default_context_builder import DefaultContextBuilder
-from rag_backend.infrastructure.query.llm_query_rewriter import LLMQueryRewriter
 from rag_backend.infrastructure.reranking.cross_encoder_reranker import CrossEncoderReranker
 from rag_backend.infrastructure.vector_db.weaviate_repository import WeaviateRepository
 
@@ -38,7 +32,6 @@ from rag_backend.application.agents.paralegal_agent import ParalegalAgentFactory
 
 # Controllers
 from rag_backend.presentation.controllers.ingestion_controller import IngestionController
-from rag_backend.presentation.controllers.query_controller import QueryController
 from rag_backend.presentation.controllers.agent_controller import AgentController
 
 
@@ -112,18 +105,7 @@ class Container:
             )
         return self._instances["reranker"]  # type: ignore
 
-    def query_rewriter(self) -> QueryRewriter:
-        if "query_rewriter" not in self._instances:
-            self._instances["query_rewriter"] = LLMQueryRewriter(
-                llm_provider=self.llm_provider(),
-                prompt_manager=self.prompt_manager(),
-            )
-        return self._instances["query_rewriter"]  # type: ignore
 
-    def context_builder(self) -> ContextBuilder:
-        if "context_builder" not in self._instances:
-            self._instances["context_builder"] = DefaultContextBuilder()
-        return self._instances["context_builder"]  # type: ignore
 
     def mongo_reader(self) -> MongoDBLegalReader:
         if "mongo_reader" not in self._instances:
@@ -147,30 +129,14 @@ class Container:
             )
         return self._instances["ingestion_service"]  # type: ignore
 
-    def query_service(self) -> QueryService:
-        if "query_service" not in self._instances:
-            self._instances["query_service"] = QueryService(
-                query_rewriter=self.query_rewriter(),
-                embedding_provider=self.embedding_provider(),
-                vector_repository=self.vector_repository(),
-                reranker=self.reranker(),
-                context_builder=self.context_builder(),
-            )
-        return self._instances["query_service"]  # type: ignore
+
 
     def prompt_manager(self) -> PromptManager:
         if "prompt_manager" not in self._instances:
             self._instances["prompt_manager"] = PromptManager()
         return self._instances["prompt_manager"]  # type: ignore
 
-    def rag_pipeline(self) -> RAGPipeline:
-        if "rag_pipeline" not in self._instances:
-            self._instances["rag_pipeline"] = RAGPipeline(
-                query_service=self.query_service(),
-                llm_provider=self.llm_provider(),
-                prompt_manager=self.prompt_manager(),
-            )
-        return self._instances["rag_pipeline"]  # type: ignore
+
 
     # ──────────────────────────────────────────────
     # Presentation Controllers
@@ -183,12 +149,7 @@ class Container:
             )
         return self._instances["ingestion_controller"]  # type: ignore
 
-    def query_controller(self) -> QueryController:
-        if "query_controller" not in self._instances:
-            self._instances["query_controller"] = QueryController(
-                rag_pipeline=self.rag_pipeline(),
-            )
-        return self._instances["query_controller"]  # type: ignore
+
 
     def multi_agent_service(self) -> MultiAgentService:
         if "multi_agent_service" not in self._instances:

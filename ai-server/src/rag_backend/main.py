@@ -23,7 +23,7 @@ from rag_backend.presentation.middlewares.error_handler import (
     rag_exception_handler,
 )
 from rag_backend.presentation.middlewares.logging_middleware import LoggingMiddleware
-from rag_backend.presentation.routes import health_routes, ingestion_routes, query_routes, agent_routes
+from rag_backend.presentation.routes import health_routes, ingestion_routes, agent_routes
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,6 @@ async def lifespan(app: FastAPI):
 
     # Inject controllers into app state (for route dependency injection)
     app.state.ingestion_controller = container.ingestion_controller()
-    app.state.query_controller = container.query_controller()
     app.state.agent_controller = container.agent_controller()
 
     logger.info("Application started successfully")
@@ -104,7 +103,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # --- Routes ---
     app.include_router(health_routes.router)
     app.include_router(ingestion_routes.router)
-    app.include_router(query_routes.router)
     app.include_router(agent_routes.router)
 
     return app

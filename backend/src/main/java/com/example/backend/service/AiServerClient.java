@@ -36,33 +36,7 @@ public class AiServerClient {
     // QUERY ENDPOINTS
     // ═══════════════════════════════════════════════════════════
 
-    public RAGResponse query(RAGQueryRequest request) {
-        log.info("Sending RAG query to AI Server: {}", request.getQuery());
-        try {
-            return aiServerWebClient.post()
-                    .uri("/api/v1/query/")
-                    .bodyValue(request)
-                    .retrieve()
-                    .bodyToMono(RAGResponse.class)
-                    .block();
-        } catch (WebClientResponseException e) {
-            log.error("AI Server returned error for query: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("AI Server query failed: " + e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("Failed to connect to AI Server for query: {}", e.getMessage());
-            throw new RuntimeException("AI Server is unavailable. Please try again later.", e);
-        }
-    }
 
-    public Flux<String> queryStream(RAGQueryRequest request) {
-        log.info("Sending streaming RAG query to AI Server: {}", request.getQuery());
-        return aiServerWebClient.post()
-                .uri("/api/v1/query/stream")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToFlux(String.class)
-                .doOnError(e -> log.error("Streaming query error: {}", e.getMessage()));
-    }
 
     public AgentQueryResponse agentQuery(AgentQueryRequest request) {
         log.info("Sending Multi-Agent RAG query to AI Server: {}", request.getQuestion());

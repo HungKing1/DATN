@@ -8,13 +8,13 @@ import {
 import { useNavigate } from 'react-router';
 import { useApp } from '../context/AppContext';
 import { MarkdownRenderer } from './MarkdownRenderer';
-import { Message, QueryMode } from '../types';
+import { Message } from '../types';
 
-function TypingIndicator({ mode }: { mode: QueryMode }) {
+function TypingIndicator() {
   return (
     <div className="flex items-end gap-2 mb-4">
       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center flex-shrink-0">
-        {mode === 'agent' ? <Brain className="w-3.5 h-3.5 text-white" /> : <Bot className="w-3.5 h-3.5 text-white" />}
+        <Brain className="w-3.5 h-3.5 text-white" />
       </div>
       <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
         <div className="flex items-center gap-1.5">
@@ -27,24 +27,21 @@ function TypingIndicator({ mode }: { mode: QueryMode }) {
             />
           ))}
           <span className="text-xs text-muted-foreground ml-2">
-            {mode === 'agent' ? 'Đang phân tích chuyên sâu...' : 'AI đang trả lời...'}
+            Đang phân tích chuyên sâu...
           </span>
-          {mode === 'agent' && (
-            <span className="ml-1 px-1.5 py-0.5 bg-violet-100 text-violet-600 text-[10px] rounded-full font-medium">
-              Tư duy
-            </span>
-          )}
+          <span className="ml-1 px-1.5 py-0.5 bg-violet-100 text-violet-600 text-[10px] rounded-full font-medium">
+            Tư duy
+          </span>
         </div>
       </div>
     </div>
   );
 }
 
-function MessageBubble({ message, isStreaming, streamContent, currentMode }: {
+function MessageBubble({ message, isStreaming, streamContent }: {
   message: Message;
   isStreaming?: boolean;
   streamContent?: string;
-  currentMode: QueryMode;
 }) {
   const [copied, setCopied] = useState(false);
   const { sendMessage } = useApp();
@@ -123,7 +120,7 @@ function MessageBubble({ message, isStreaming, streamContent, currentMode }: {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 + idx * 0.05 }}
-                onClick={() => sendMessage(q, currentMode)}
+                onClick={() => sendMessage(q)}
                 className="px-3 py-1.5 bg-card border border-border rounded-full text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-150"
               >
                 {q}
@@ -142,7 +139,6 @@ export function ChatPanel() {
     streamingMsgId, streamingContent
   } = useApp();
   const [input, setInput] = useState('');
-  const [queryMode, setQueryMode] = useState<QueryMode>('quick');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
@@ -154,7 +150,7 @@ export function ChatPanel() {
   const handleSend = () => {
     const trimmed = input.trim();
     if (!trimmed || isAIThinking) return;
-    sendMessage(trimmed, queryMode);
+    sendMessage(trimmed);
     setInput('');
     inputRef.current?.focus();
   };
@@ -196,7 +192,7 @@ export function ChatPanel() {
                 {quickPrompts.map((prompt, idx) => (
                   <button
                     key={idx}
-                    onClick={() => sendMessage(prompt, queryMode)}
+                    onClick={() => sendMessage(prompt)}
                     className="px-3 py-2.5 text-left bg-card border border-border rounded-xl text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-150"
                   >
                     {prompt}
@@ -212,10 +208,9 @@ export function ChatPanel() {
                   message={msg}
                   isStreaming={msg.id === streamingMsgId}
                   streamContent={msg.id === streamingMsgId ? streamingContent : undefined}
-                  currentMode={queryMode}
                 />
               ))}
-              {isAIThinking && <TypingIndicator mode={queryMode} />}
+              {isAIThinking && <TypingIndicator />}
               <div ref={messagesEndRef} />
             </>
           )}
@@ -239,33 +234,7 @@ export function ChatPanel() {
             <div className="flex items-center gap-1">
 
 
-              {/* Mode selector: Nhanh / Tư duy */}
-              <div className="flex items-center gap-0.5 ml-1 bg-muted rounded-full p-0.5">
-                <button
-                  id="chat-mode-quick"
-                  onClick={() => setQueryMode('quick')}
-                  title="Nhanh — RAG tiêu chuẩn"
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${queryMode === 'quick'
-                    ? 'bg-white shadow-sm text-blue-600'
-                    : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                >
-                  <Zap className="w-3 h-3" />
-                  <span>Nhanh</span>
-                </button>
-                <button
-                  id="chat-mode-agent"
-                  onClick={() => setQueryMode('agent')}
-                  title="Tư duy — Multi-Agent LangGraph"
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${queryMode === 'agent'
-                    ? 'bg-white shadow-sm text-violet-600'
-                    : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                >
-                  <Brain className="w-3 h-3" />
-                  <span>Tư duy</span>
-                </button>
-              </div>
+
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground hidden sm:block">

@@ -2,8 +2,6 @@ package com.example.backend.service.impl;
 
 import com.example.backend.dto.ai.AgentQueryRequest;
 import com.example.backend.dto.ai.AgentQueryResponse;
-import com.example.backend.dto.ai.RAGQueryRequest;
-import com.example.backend.dto.ai.RAGResponse;
 import com.example.backend.dto.request.ChatRequest;
 import com.example.backend.entity.Message;
 import com.example.backend.entity.Conversation;
@@ -52,11 +50,8 @@ public class ChatServiceImpl implements ChatService {
                 .build();
         messageRepository.save(userMessage);
 
-        // Route to correct AI Server pipeline based on mode
-        boolean isAgentMode = "agent".equalsIgnoreCase(request.getMode());
-        Message aiMessage = isAgentMode
-                ? processAgentQuery(conversationId, request.getContent())
-                : processQuickQuery(conversationId, request.getContent());
+        // Route to AI Server Multi-Agent pipeline
+        Message aiMessage = processAgentQuery(conversationId, request.getContent());
 
         aiMessage = messageRepository.save(aiMessage);
 
@@ -71,54 +66,7 @@ public class ChatServiceImpl implements ChatService {
     // PRIVATE HELPERS
     // ─────────────────────────────────────────────────────────────
 
-    /**
-     * Standard RAG pipeline — calls POST /api/v1/query/ on AI Server.
-     * Fast response: Query Rewrite → Hybrid Search → Rerank → LLM Generate.
-     */
-    private Message processQuickQuery(String conversationId, String content) {
-        try {
-            RAGQueryRequest ragRequest = RAGQueryRequest.builder()
-                    .query(content)
-                    .useReranker(true)
-                    .useQueryRewrite(true)
-                    .build();
 
-            RAGResponse ragResponse = aiServerClient.query(ragRequest);
-
-            List<Message.Citation> citations = ragResponse.getCitations() != null
-                    ? ragResponse.getCitations().stream()
-                        .map(c -> Message.Citation.builder()
-                                .lawName(c.getSource())
-                                .text(c.getContentSnippet())
-                                .similarityScore(c.getRelevanceScore())
-                                .build())
-                        .collect(Collectors.toList())
-                    : List.of();
-
-            Double confidence = ragResponse.getCitations() != null && !ragResponse.getCitations().isEmpty()
-                    ? ragResponse.getCitations().stream()
-                        .mapToDouble(RAGResponse.RAGCitation::getRelevanceScore)
-                        .average()
-                        .orElse(0.0)
-                    : null;
-
-            log.info("Quick RAG response generated for conversation: {}", conversationId);
-            return Message.builder()
-                    .conversationId(conversationId)
-                    .role("ai")
-                    .content(ragResponse.getAnswer())
-                    .citations(citations)
-                    .confidence(confidence)
-                    .suggestedQuestions(List.of(
-                            "Bạn có thể giải thích thêm không?",
-                            "Có điều luật nào liên quan khác không?"))
-                    .build();
-
-        } catch (Exception e) {
-            log.error("AI Server unavailable (quick mode), returning fallback: {}", e.getMessage());
-            return buildFallbackMessage(conversationId, content);
-        }
-    }
 
     /**
      * Multi-Agent RAG pipeline — calls POST /api/v1/query/agent on AI Server.

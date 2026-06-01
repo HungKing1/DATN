@@ -241,11 +241,7 @@ npm run build
 - Chức năng Note, Conversations
 - Admin pages: AdminDashboard, IngestionPage
 - Mock system (MOCK_MODE) để dev offline
-- **Chat mode selector**: 2 nút "Nhanh" (⚡) và "Tư duy" (🧠) trong ChatPanel
-  - `QueryMode` type trong `types.ts`
-  - `sendMessage(content, mode?)` trong AppContext + chatService
-  - Backend nhận field `mode: 'quick' | 'agent'` trong `ChatRequest`
-- **Đã xóa Dark Mode** (2026-05-24): Removed `ThemeToggle.tsx`, `.dark {}` CSS block, `@custom-variant dark`, tất cả `dark:*` Tailwind classes trong ~22 files. App chỉ còn Light mode cố định.
+- **Chat mode selector**: Đã xóa bỏ hoàn toàn UI toggle (⚡ Nhanh / 🧠 Tư duy) vì Backend đã chuyển sang dùng duy nhất luồng Multi-Agent. AppContext và API service cũng đã được dọn dẹp để không gửi tham số mode.
 - **Tính năng Tra cứu Văn bản pháp luật**:
   - Thêm `LegalDocumentPage.tsx` (danh sách + tìm kiếm luật) và `LegalDocumentViewer.tsx` (giao diện đọc văn bản có thanh cuộn Mục lục TOC).
   - Tối ưu UX/UI cho Trang văn bản: 
@@ -270,10 +266,10 @@ npm run build
   - Gỡ bỏ hoàn toàn `CollectionRegistryPage` và các routes liên quan ở nhánh Admin.
   - Cập nhật data model `Conversation`: loại bỏ `emoji` và `color`.
   - Tích hợp `reloadLaw` API vào `adminService.ts` cho chức năng đồng bộ tài liệu từ MongoDB.
-  - *Lưu ý:* Backend đã gỡ bỏ hoàn toàn RAG Query Workflow (Quick Mode) và chuyển sang Multi-Agent Flow. Giao diện ChatPanel hiện vẫn còn UI Mode Selector (⚡/🧠) nhưng sẽ cần dọn dẹp ở phase sau.
+  - *Lưu ý:* Backend đã gỡ bỏ hoàn toàn RAG Query Workflow. Giao diện ChatPanel đã xóa Mode Selector. Hỗ trợ query 100% qua LangGraph Agent.
 
 ### 🔧 Đang làm / Cần kiểm tra
 - *(Cập nhật tại đây khi có)*
 
 ### 📌 Việc cần làm tiếp theo
-- *(Cập nhật tại đây khi có)*
+- (Không có gì đáng lưu ý)

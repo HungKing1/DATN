@@ -1,8 +1,5 @@
 export type LawStatus = 'draft' | 'active' | 'archived';
 
-/** Chat query mode: 'quick' → standard RAG, 'agent' → Multi-Agent LangGraph */
-export type QueryMode = 'quick' | 'agent';
-
 
 
 export interface Citation {

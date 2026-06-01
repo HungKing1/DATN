@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { Message, Citation, Conversation, Note, AppSettings, QueryMode } from '../types';
+import { Message, Citation, Conversation, Note, AppSettings } from '../types';
 
 import { legalService } from '../api/legalService';
 import { chatService } from '../api/chatService';
@@ -23,7 +23,7 @@ interface AppContextValue {
   isAIThinking: boolean;
   streamingMsgId: string | null;
   streamingContent: string;
-  sendMessage: (content: string, mode?: QueryMode) => Promise<void>;
+  sendMessage: (content: string) => Promise<void>;
 
   // Citations
   currentCitations: Citation[];
@@ -172,7 +172,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [conversations]);
 
   const sendMessage = useCallback(
-    async (content: string, mode: QueryMode = 'quick') => {
+    async (content: string) => {
       let targetNbId = activeConversationId;
 
       // Auto-create a new conversation if there is no active one
@@ -209,7 +209,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       try {
         // Gửi qua API
-        const responseMsg = await chatService.sendMessage(targetNbId, content, mode);
+        const responseMsg = await chatService.sendMessage(targetNbId, content);
 
         setIsAIThinking(false);
 
