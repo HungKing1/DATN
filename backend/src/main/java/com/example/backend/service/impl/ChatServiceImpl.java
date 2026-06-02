@@ -55,9 +55,11 @@ public class ChatServiceImpl implements ChatService {
 
         aiMessage = messageRepository.save(aiMessage);
 
-        // Update Conversation message count
-        conversation.setMessageCount(conversation.getMessageCount() + 2);
-        conversationRepository.save(conversation);
+        // Re-fetch conversation to avoid overwriting concurrent updates (e.g., title updates from frontend)
+        Conversation latestConversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+        latestConversation.setMessageCount(latestConversation.getMessageCount() + 2);
+        conversationRepository.save(latestConversation);
 
         return aiMessage;
     }

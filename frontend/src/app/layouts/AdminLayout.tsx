@@ -9,8 +9,8 @@ import { Separator } from '../components/ui/separator';
 import { useAuth } from '../context/AuthContext';
 
 const NAV_PRIMARY = [
-  { to: '/admin',             label: 'Tổng quan',          icon: LayoutDashboard, end: true  },
-  { to: '/admin/ingestion',   label: 'Quản lý Tài liệu',   icon: UploadCloud,     end: false },
+  { to: '/admin', label: 'Tổng quan', icon: LayoutDashboard, end: true },
+  { to: '/admin/ingestion', label: 'Quản lý Tài liệu', icon: UploadCloud, end: false },
 ];
 
 function NavItem({
@@ -54,7 +54,7 @@ export function AdminLayout() {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar */}
-      <motion.aside 
+      <motion.aside
         animate={{ width: collapsed ? 56 : 256 }}
         transition={{ duration: 0.25, ease: 'easeInOut' }}
         className="flex flex-col flex-shrink-0 border-r border-border bg-background relative"
@@ -63,7 +63,7 @@ export function AdminLayout() {
         <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between'} px-3 py-3 border-b border-border`}>
           <AnimatePresence>
             {!collapsed && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
@@ -73,7 +73,7 @@ export function AdminLayout() {
                   <span className="text-sm font-bold">A</span>
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-sm font-semibold text-foreground leading-none truncate">RAG Admin</p>
+                  <p className="text-sm font-semibold text-foreground leading-none truncate">Dashboard</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Hệ thống AI Pháp luật</p>
                 </div>
               </motion.div>
@@ -97,7 +97,7 @@ export function AdminLayout() {
             </p>
           )}
           {collapsed && <div className="h-4" />}
-          
+
           {NAV_PRIMARY.map(item => (
             <NavItem key={item.to} {...item} collapsed={collapsed} />
           ))}
