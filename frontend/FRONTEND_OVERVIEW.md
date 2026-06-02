@@ -250,7 +250,7 @@ npm run build
     - Xây dựng cây phân cấp (Tree Hierarchy) thực sự cho Mục lục TOC (Phần > Chương > Mục > Tiểu mục > Điều).
     - Có khả năng click vào bất kỳ cấp bậc nào trên TOC để cuộn (scroll) tới đúng phần nội dung tương ứng.
     - Tự động chèn các tiêu đề (Heading) hiển thị `Phần`, `Chương`, `Mục`, `Tiểu mục` xen kẽ giữa các Điều trong phần nội dung chính để dễ đọc.
-  - `MarkdownRenderer.tsx` được tối ưu hóa: render bảng GFM, chèn blank line tự động cho định dạng chuẩn.
+  - `MarkdownRenderer.tsx` được tối ưu hóa: render bảng GFM, chèn blank line tự động cho định dạng chuẩn, xử lý xuống dòng thông minh cho các mục lục luật (a, b, c...) và nhận diện nối câu (hard-wrapped text) chính xác.
 - **Refactor IngestionPage (2026-05-29 & 05-30):**
   - Bỏ hoàn toàn drag-and-drop file upload.
   - Tích hợp tính năng lọc danh sách `legal_document` từ MongoDB trực tiếp dưới thanh tìm kiếm.

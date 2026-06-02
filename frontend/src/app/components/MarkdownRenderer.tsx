@@ -16,6 +16,11 @@ function preprocessMarkdown(content: string): string {
   const lines = content.split('\n');
   const result: string[] = [];
 
+  // Nhận diện dòng bắt đầu bằng list marker (vd: "1.", "a)", "a1)", "-", "+", "*", "“1.")
+  const listMarkerRegex = /^["“']?(?:[a-zđA-ZĐ]\d*\)|[0-9]+\.|[-–+*])\s/i;
+  // Nhận diện dòng kết thúc bằng dấu ngắt đoạn
+  const endPunctuationRegex = /[.:;!?]["”']?\s*$/;
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const prevLine = i > 0 ? lines[i - 1] : '';
@@ -23,20 +28,37 @@ function preprocessMarkdown(content: string): string {
     const prevIsTableRow = prevLine.trimStart().startsWith('|');
     const prevIsBlank = prevLine.trim() === '';
 
-    // Chèn blank line TRƯỚC dòng đầu tiên của bảng
-    if (isTableRow && !prevIsTableRow && !prevIsBlank) {
-      result.push('');
+    // Xử lý table
+    if (isTableRow) {
+      if (!prevIsTableRow && !prevIsBlank) {
+        result.push('');
+      }
+      result.push(line);
+
+      const nextLine = i < lines.length - 1 ? lines[i + 1] : '';
+      const nextIsTableRow = nextLine.trimStart().startsWith('|');
+      const nextIsBlank = nextLine.trim() === '';
+      if (!nextIsTableRow && !nextIsBlank) {
+        result.push('');
+      }
+      continue;
+    }
+
+    // Xử lý text thông thường (không phải table)
+    const isListMarker = listMarkerRegex.test(line.trim());
+    const prevEndsWithPunctuation = endPunctuationRegex.test(prevLine.trimEnd());
+
+    // Nếu dòng trước không phải table và không rỗng
+    if (i > 0 && !prevIsTableRow && !prevIsBlank) {
+      // Ép xuống dòng (tạo paragraph mới) nếu:
+      // 1. Dòng hiện tại là list item (a), b), 1.)
+      // 2. HOẶC dòng trước kết thúc bằng dấu câu ngắt đoạn (. : ;)
+      if (isListMarker || prevEndsWithPunctuation) {
+        result.push('');
+      }
     }
 
     result.push(line);
-
-    // Chèn blank line SAU dòng cuối cùng của bảng
-    const nextLine = i < lines.length - 1 ? lines[i + 1] : '';
-    const nextIsTableRow = nextLine.trimStart().startsWith('|');
-    const nextIsBlank = nextLine.trim() === '';
-    if (isTableRow && !nextIsTableRow && !nextIsBlank) {
-      result.push('');
-    }
   }
 
   // Chuyển citation refs [1] → [[1]](cite:1)
@@ -53,10 +75,22 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         components={{
           h2: ({ node, ...props }) => <h2 className="md-h2" {...props} />,
           h3: ({ node, ...props }) => <h3 className="md-h3" {...props} />,
-          p:  ({ node, ...props }) => <p className="md-p" {...props} />,
+          p: ({ node, children, ...props }) => {
+            let pClassName = "md-p";
+            const firstChild = Array.isArray(children) ? children[0] : children;
+            if (typeof firstChild === 'string') {
+              const text = firstChild.trim();
+              if (/^["“']?[a-zđA-ZĐ]\d+\)/.test(text)) {
+                pClassName += " pl-8"; // Tiết: a1), b2) -> thụt vào mức 2
+              } else if (/^["“']?[a-zđA-ZĐ]\)/.test(text) || /^["“']?[-–+*]/.test(text)) {
+                pClassName += " pl-4"; // Điểm hoặc gạch đầu dòng: a), b), - -> thụt vào mức 1
+              }
+            }
+            return <p className={pClassName} {...props}>{children}</p>;
+          },
           ul: ({ node, ...props }) => <ul className="md-ul" {...props} />,
           ol: ({ node, ...props }) => <ol className="md-ol" {...props} />,
-          a:  ({ node, href, children, ...props }) => {
+          a: ({ node, href, children, ...props }) => {
             if (href?.startsWith('cite:')) {
               return <sup className="citation-ref">{children}</sup>;
             }
@@ -67,7 +101,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
             // ReactMarkdown passes inline as a boolean or we can infer it
             const match = /language-(\w+)/.exec(className || '');
             const isInline = props.inline ?? (!match && !String(children).includes('\n'));
-            
+
             if (isInline) {
               return <code className="inline-code" {...props}>{children}</code>;
             }

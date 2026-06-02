@@ -60,13 +60,6 @@ class WeaviateRepository(VectorRepository):
             logger.error("Weaviate health check failed: %s", e)
             return False
 
-    async def collection_exists(self, collection_name: str) -> bool:
-        try:
-            client = await self._get_client()
-            return client.collections.exists(collection_name)
-        except Exception as e:
-            raise VectorStoreError(f"Failed to check collection: {collection_name}", detail=str(e)) from e
-
     async def close(self) -> None:
         if self._client is not None:
             self._client.close()
@@ -286,6 +279,7 @@ class WeaviateRepository(VectorRepository):
         top_k: int = 10,
         so_ky_hieu: str | None = None,
         ten_day_du: str | None = None,
+        dieu_number: int | None = None,
         alpha: float = 0.5,
     ) -> list[RetrievalResult]:
         """Hybrid search (BM25 + vector) on LegalChunk collection."""
@@ -295,20 +289,26 @@ class WeaviateRepository(VectorRepository):
                 return []
             chunk_col = client.collections.get("LegalChunk")
 
-            filters = None
-            if so_ky_hieu and ten_day_du:
-                filters = Filter.by_property("so_ky_hieu").equal(so_ky_hieu) & Filter.by_property("ten_day_du").like(f"*{ten_day_du}*")
-            elif so_ky_hieu:
-                filters = Filter.by_property("so_ky_hieu").equal(so_ky_hieu)
-            elif ten_day_du:
-                filters = Filter.by_property("ten_day_du").like(f"*{ten_day_du}*")
+            filters_list = []
+            if so_ky_hieu:
+                filters_list.append(Filter.by_property("so_ky_hieu").equal(so_ky_hieu))
+            if ten_day_du:
+                filters_list.append(Filter.by_property("ten_day_du").like(f"*{ten_day_du}*"))
+            if dieu_number is not None:
+                filters_list.append(Filter.by_property("dieu_numbers").contains_any([dieu_number]))
+
+            final_filter = None
+            if len(filters_list) == 1:
+                final_filter = filters_list[0]
+            elif len(filters_list) > 1:
+                final_filter = Filter.all_of(filters_list)
 
             response = chunk_col.query.hybrid(
                 query=query,
                 vector=query_vector,
                 alpha=alpha,
                 limit=top_k,
-                filters=filters,
+                filters=final_filter,
                 return_metadata=MetadataQuery(score=True),
             )
 

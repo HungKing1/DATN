@@ -156,6 +156,7 @@ class Container:
             master = MasterLawyerAgent(
                 llm_provider=self.llm_provider(),
                 prompt_manager=self.prompt_manager(),
+                vector_repository=self.vector_repository(),
             )
             paralegal_factory = ParalegalAgentFactory(
                 llm_provider=self.llm_provider(),
@@ -167,7 +168,6 @@ class Container:
             self._instances["multi_agent_service"] = MultiAgentService(
                 master_agent=master,
                 paralegal_factory=paralegal_factory,
-                max_iterations=5,
             )
         return self._instances["multi_agent_service"]  # type: ignore
 

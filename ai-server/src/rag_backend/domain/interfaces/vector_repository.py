@@ -22,10 +22,6 @@ class VectorRepository(ABC):
         ...
 
     @abstractmethod
-    async def collection_exists(self, collection_name: str) -> bool:
-        ...
-
-    @abstractmethod
     async def initialize_schema(self) -> None:
         """Create LegalChunk collection if it doesn't exist."""
         ...
@@ -73,6 +69,7 @@ class VectorRepository(ABC):
         top_k: int = 10,
         so_ky_hieu: str | None = None,
         ten_day_du: str | None = None,
+        dieu_number: int | None = None,
         alpha: float = 0.5,
     ) -> list[RetrievalResult]:
         """Hybrid search (BM25 + vector) on LegalChunk collection."""

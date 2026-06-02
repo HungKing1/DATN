@@ -11,6 +11,8 @@ class ResearchFinding(TypedDict):
 
     task_description: str
     law_name: str | None
+    so_ky_hieu: str | None
+    dieu_number: int | None
     query_used: str
     chunks: list[dict]
 
@@ -18,6 +20,8 @@ class ParalegalInput(TypedDict):
     """Input payload for Paralegal node."""
     task_description: str
     law_name: str | None
+    so_ky_hieu: str | None
+    dieu_number: int | None
     tool_call_id: str
 
 

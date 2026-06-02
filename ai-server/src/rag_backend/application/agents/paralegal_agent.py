@@ -37,9 +37,14 @@ class ParalegalAgentFactory:
         task_msg = f"Task Description: {input_data['task_description']}\n"
         if input_data.get("law_name"):
             task_msg += f"Law name filter: {input_data['law_name']}\n"
+        if input_data.get("so_ky_hieu"):
+            task_msg += f"Document number filter: {input_data['so_ky_hieu']}\n"
+        if input_data.get("dieu_number") is not None:
+            task_msg += f"Article number filter: {input_data['dieu_number']}\n"
             
         result = await agent.ainvoke(
             {"messages": [HumanMessage(content=task_msg)]},
+            config={"recursion_limit": 10},
         )
         
         # Extract research findings from tool calls
@@ -58,6 +63,8 @@ class ParalegalAgentFactory:
         finding = ResearchFinding(
             task_description=input_data["task_description"],
             law_name=input_data.get("law_name"),
+            so_ky_hieu=input_data.get("so_ky_hieu"),
+            dieu_number=input_data.get("dieu_number"),
             query_used=", ".join(queries_used),
             chunks=chunks_collected,
         )

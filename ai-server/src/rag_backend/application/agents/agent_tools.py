@@ -24,11 +24,18 @@ def read_todos() -> str:
 
 
 @tool
-def delegate_task(description: str, law_name: Optional[str] = None) -> str:
+def delegate_task(
+    description: str,
+    law_name: Optional[str] = None,
+    so_ky_hieu: Optional[str] = None,
+    dieu_number: Optional[int] = None,
+) -> str:
     """Tạo task cho Paralegal Agent đi tìm kiếm thông tin theo mô tả.
     Args:
         description: Mô tả chi tiết vấn đề pháp lý cần tìm kiếm.
-        law_name: Tên của bộ luật (ví dụ 'Bộ luật Dân sự') nếu biết, nếu không có thể để None.
+        law_name: Tên CỐT LÕI của bộ luật (ví dụ 'Giá Trị Gia Tăng', 'Đất đai') thay vì tên đầy đủ. KHÔNG truyền số ký hiệu vào đây.
+        so_ky_hieu: Số ký hiệu của văn bản nếu biết (ví dụ '48/2024/QH15').
+        dieu_number: Số nguyên của Điều luật nếu muốn tìm đích danh (ví dụ 15).
     """
     return f"Đã giao việc: {description}"
 
@@ -46,21 +53,31 @@ def create_search_law_database_tool(
 ):
     @tool
     async def search_law_database(
-        query: str,
+        query: str = "",
         law_name: Optional[str] = None,
+        so_ky_hieu: Optional[str] = None,
+        dieu_number: Optional[int] = None,
     ) -> str:
         """Tìm kiếm trong cơ sở dữ liệu luật. Trả về text nguyên văn.
         Args:
-            query: Câu query dùng để tìm kiếm (từ khóa hoặc câu hỏi).
-            law_name: Tên của bộ luật (ví dụ 'Bộ luật Dân sự') để thu hẹp phạm vi tìm kiếm (optional).
+            query: BẮT BUỘC. Câu query dùng để tìm kiếm (từ khóa hoặc câu hỏi nội dung).
+            law_name: Tên CỐT LÕI của bộ luật (ví dụ 'Giá Trị Gia Tăng'). KHÔNG truyền số ký hiệu.
+            so_ky_hieu: Số ký hiệu của văn bản nếu có (ví dụ '48/2024/QH15').
+            dieu_number: Số nguyên của Điều luật nếu muốn tìm đích danh (ví dụ 15).
         """
         try:
+            if not query:
+                # Fallback in case the LLM fails to provide a query
+                query = f"Nội dung quy định về {law_name or ''} {so_ky_hieu or ''} Điều {dieu_number or ''}"
+
             query_vector = await embedding_provider.embed_text(query)
             results = await vector_repo.hybrid_search(
                 query=query,
                 query_vector=query_vector,
                 top_k=20,
                 ten_day_du=law_name,
+                so_ky_hieu=so_ky_hieu,
+                dieu_number=dieu_number,
             )
             
             if not results:
@@ -94,3 +111,29 @@ def think_tool(reflection: str) -> str:
         reflection: Đánh giá: "Đã tìm thấy nội dung cần thiết chưa? Có cần đổi từ khóa search không?".
     """
     return f"[Reflection logged]: {reflection}"
+
+
+def create_list_available_laws_tool(vector_repo: VectorRepository):
+    @tool
+    async def list_available_laws() -> str:
+        """Lấy danh sách các bộ luật hiện có trong hệ thống để biết lĩnh vực có thể trả lời.
+        Sử dụng tool này khi cần xác định hệ thống có hỗ trợ tra cứu về một bộ luật cụ thể hay không.
+        """
+        try:
+            laws = await vector_repo.get_distinct_laws()
+            if not laws:
+                return "Hiện tại hệ thống chưa có dữ liệu bộ luật nào."
+            
+            formatted_laws = []
+            for law in laws:
+                so_ky_hieu = law.get('so_ky_hieu', 'N/A')
+                ten_day_du = law.get('ten_day_du', 'N/A')
+                loai_van_ban = law.get('loai_van_ban', 'N/A')
+                formatted_laws.append(f"- {loai_van_ban} {so_ky_hieu}: {ten_day_du}")
+                
+            return "Các bộ luật hiện có trong hệ thống:\n" + "\n".join(formatted_laws)
+        except Exception as e:
+            return f"Lỗi khi lấy danh sách bộ luật: {str(e)}"
+            
+    return list_available_laws
+

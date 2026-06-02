@@ -235,6 +235,7 @@ User Query
     │
     ▼
 MasterLawyerAgent (Node)
+    │   ├── Gọi `list_available_laws()` (Kiểm tra phạm vi dữ liệu)
     │   ├── Phân tích câu hỏi
     │   ├── Gọi `write_todos()`
     │   └── Gọi `delegate_task()` cho từng vấn đề pháp lý
@@ -428,4 +429,4 @@ LANGCHAIN_PROJECT=rag_backend_dev
 
 ---
 
-*Cập nhật lần cuối: 2026-06-01. Tích hợp Reranker và Expand Split Chunks vào Paralegal Agent, sử dụng `law_name` (chứa `ten_day_du`) thay cho `so_ky_hieu` để tăng cường độ chính xác khi query LangGraph.*
+*Cập nhật lần cuối: 2026-06-01. Tích hợp Reranker và Expand Split Chunks vào Paralegal Agent, sử dụng `law_name` để tăng độ chính xác. Bổ sung `list_available_laws` tool cho Master Agent để nhận biết phạm vi tri thức.*

@@ -14,54 +14,24 @@ class PromptManager:
     Provides a central registry for all prompt templates used in the RAG pipeline.
     """
 
-    GENERATE_LAW_HEADER_PROMPT = """Bạn là chuyên gia pháp luật Việt Nam.
-Dưới đây là đoạn trích đầu của các văn bản thuộc cùng 1 bộ luật:
-
-{excerpts}
-
-Hãy tổng hợp và tạo metadata cho bộ luật này.
-TRẢ VỀ ĐÚNG FORMAT JSON SAU, TUYỆT ĐỐI KHÔNG BAO BỌC BẰNG MARKDOWN (như ```json):
-
-{{
-  "title": "Tên ngắn gọn đại diện cho toàn bộ văn bản (ví dụ: Luật Giao thông Đường bộ)",
-  "description": "Mô tả 3-4 câu về nội dung chính, phạm vi áp dụng và đối tượng điều chỉnh",
-  "keywords": ["từ khóa 1", "từ khóa 2", "từ khóa 3", "từ khóa 4", "từ khóa 5"]
-}}
-
-CHỈ trả về một block JSON duy nhất. Không giải thích thêm."""
-
-    UPDATE_LAW_DESCRIPTION_PROMPT = """Bạn là chuyên gia pháp luật Việt Nam.
-Bộ luật "{law_title}" hiện có mô tả sau:
-
-{old_description}
-
-Một văn bản mới được bổ sung vào bộ luật này:
---- Văn bản mới: {new_filename} ---
-{new_excerpt}
-
-Hãy CẬP NHẬT mô tả để bao gồm nội dung của văn bản mới.
-Giữ nguyên phần mô tả cũ còn phù hợp, chỉ bổ sung thông tin mới.
-TRẢ VỀ ĐÚNG FORMAT JSON SAU, KHÔNG BAO BỌC BẰNG MARKDOWN:
-
-{{
-  "description": "mô tả đã cập nhật (3-4 câu)",
-  "keywords": ["danh sách keywords đã cập nhật (5-7 từ khóa)"]
-}}
-
-CHỈ trả về một block JSON duy nhất. Không giải thích thêm."""
-
 
 
     MASTER_LAWYER_SYSTEM_PROMPT = """Bạn là Luật sư trưởng AI chuyên xử lý câu hỏi pháp luật Việt Nam phức tạp.
 
 NHIỆM VỤ:
-1. Phân tích câu hỏi → xác định CÁC VẤN ĐỀ PHÁP LÝ cần tra cứu (có thể nhiều bộ luật)
-2. Gọi write_todos() với danh sách tasks CỤ THỂ (mỗi task = 1 vấn đề pháp lý riêng biệt)
-3. Gọi delegate_task() cho MỖI TODO để Paralegal đi tìm kiếm (có thể song song)
-4. Sau khi có research_findings, gọi read_research_findings() và viết câu trả lời cuối cùng
+1. Gọi list_available_laws() nếu cần biết hệ thống hiện có các bộ luật nào, từ đó quyết định xem có thể trả lời được câu hỏi hay không.
+2. Phân tích câu hỏi → xác định CÁC VẤN ĐỀ PHÁP LÝ cần tra cứu (có thể nhiều bộ luật)
+3. Gọi write_todos() với danh sách tasks CỤ THỂ (mỗi task = 1 vấn đề pháp lý riêng biệt)
+4. Gọi delegate_task() cho MỖI TODO để Paralegal đi tìm kiếm (có thể song song)
+5. Sau khi có research_findings, gọi read_research_findings() và viết câu trả lời cuối cùng
 
 QUY TẮC BẮT BUỘC:
-- Mỗi delegate_task phải nêu rõ: vấn đề pháp lý cần tìm + bộ luật liên quan (nếu biết)
+- Mỗi delegate_task phải nêu rõ: vấn đề pháp lý cần tìm + bộ luật liên quan (CHỈ DÙNG TÊN CỐT LÕI, vd 'Giá Trị Gia Tăng').
+- KHI GIAO VIỆC (delegate_task), bạn CẦN TRÍCH XUẤT các thông tin từ danh sách list_available_laws() (format: `- {{loai_van_ban}} {{so_ky_hieu}}: {{ten_day_du}}`):
+  + so_ky_hieu: vd '48/2024/QH15'
+  + law_name: vd 'Thuế Giá Trị Gia Tăng' (bỏ phần loại văn bản và số ký hiệu đi)
+  + dieu_number: Lấy số nguyên nếu câu hỏi nhắc đến 'Điều X' (vd 15).
+- ĐẶC BIỆT CHÚ Ý LUẬT SỬA ĐỔI: Khi tìm kiếm về một bộ luật (VD: Thuế GTGT), nếu trong danh sách list_available_laws() có "Luật Sửa đổi, bổ sung" của bộ luật đó, BẮT BUỘC phải yêu cầu Paralegal tìm kiếm trên CẢ luật gốc VÀ luật sửa đổi bổ sung để tránh lấy phải quy định cũ đã hết hiệu lực.
 - KHÔNG tự suy diễn điều luật — chỉ dùng dữ liệu từ research_findings
 - Câu trả lời cuối phải trích dẫn nguyên văn điều luật từ findings
 - Nếu findings không đủ → chỉ rõ thiếu thông tin gì, KHÔNG bịa đặt"""
@@ -71,7 +41,7 @@ QUY TẮC BẮT BUỘC:
 NHIỆM VỤ: Tìm kiếm và trích xuất nguyên văn điều luật liên quan đến task được giao.
 
 QUY TRÌNH BẮT BUỘC:
-1. Gọi search_law_database(query, law_uuid) với query phù hợp
+1. Gọi tool search_law_database. BẠN BẮT BUỘC PHẢI TẠO tham số `query` (chuỗi văn bản mô tả nội dung cần tìm). Truyền thêm các filter được giao (law_name, so_ky_hieu, dieu_number) nếu có. LƯU Ý: law_name chỉ là TÊN CỐT LÕI (vd 'Giá Trị Gia Tăng').
 2. Gọi think_tool() để đánh giá: kết quả có đủ/đúng không? Cần đổi keyword không?
 3. Nếu cần → search lại với query khác (tối đa 3 lần)
 4. Trả về kết quả (các chunks đã tìm được sẽ tự động lưu vào State)
@@ -83,8 +53,6 @@ QUY TẮC TUYỆT ĐỐI:
 
     def __init__(self) -> None:
         self._templates: dict[str, str] = {
-            "generate_law_header": self.GENERATE_LAW_HEADER_PROMPT,
-            "update_law_description": self.UPDATE_LAW_DESCRIPTION_PROMPT,
             "master_lawyer_system": self.MASTER_LAWYER_SYSTEM_PROMPT,
             "paralegal_system": self.PARALEGAL_SYSTEM_PROMPT,
         }

@@ -8,7 +8,7 @@ from rag_backend.domain.models.agent_state import DeepAgentState
 
 
 class MultiAgentService:
-    def __init__(self, master_agent, paralegal_factory, max_iterations=5):
+    def __init__(self, master_agent, paralegal_factory, max_iterations=10):
         self._master_agent = master_agent
         self._paralegal_factory = paralegal_factory
         self._max_iterations = max_iterations
@@ -60,6 +60,14 @@ class MultiAgentService:
             elif tc["name"] == "read_research_findings":
                 tool_messages.append(ToolMessage(content=str(state.get("research_findings", [])), tool_call_id=tc["id"]))
                 
+            elif tc["name"] == "list_available_laws":
+                tool = next((t for t in self._master_agent._tools if t.name == "list_available_laws"), None)
+                if tool:
+                    result = await tool.ainvoke(tc["args"])
+                    tool_messages.append(ToolMessage(content=result, tool_call_id=tc["id"]))
+                else:
+                    tool_messages.append(ToolMessage(content="Tool not found.", tool_call_id=tc["id"]))
+                
         ret = {"messages": tool_messages}
         if new_todos is not None:
             ret["todos"] = new_todos
@@ -84,19 +92,20 @@ class MultiAgentService:
                 sends.append(Send("paralegal", {
                     "task_description": tc["args"].get("description", ""),
                     "law_name": tc["args"].get("law_name"),
+                    "so_ky_hieu": tc["args"].get("so_ky_hieu"),
+                    "dieu_number": tc["args"].get("dieu_number"),
                     "tool_call_id": tc["id"]
                 }))
             else:
                 has_simple_tools = True
                 
-        destinations = sends
-        if has_simple_tools:
-            destinations.append("master_tools")
+        if has_simple_tools and not sends:
+            return "master_tools"
             
-        if not destinations:
-            return END
+        if sends:
+            return sends
             
-        return destinations
+        return END
 
     async def run(self, question: str) -> dict:
         initial_state = {
