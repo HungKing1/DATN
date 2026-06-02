@@ -64,14 +64,6 @@ public class ConversationServiceImpl implements ConversationService {
         conversationRepository.save(conversation);
     }
 
-    @Override
-    public List<String> getSuggestions(String conversationId, String userId) {
-        getConversationAndVerifyOwner(conversationId, userId);
-        return messageRepository.findFirstByConversationIdAndRoleOrderByCreatedAtDesc(conversationId, "ai")
-                .map(Message::getSuggestedQuestions)
-                .orElse(List.of("Tôi có thể hỏi thêm về vấn đề gì?", "Quy định này áp dụng cho đối tượng nào?"));
-    }
-
     private Conversation getConversationAndVerifyOwner(String conversationId, String userId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found"));

@@ -1,6 +1,5 @@
 import { Outlet, useLocation, Navigate } from 'react-router';
 import { LeftSidebar } from './LeftSidebar';
-import { SourcePanel } from './SourcePanel';
 import { useAuth } from '../context/AuthContext';
 
 export function Layout() {
@@ -29,8 +28,6 @@ export function Layout() {
           <div className="flex-1 min-w-0 overflow-hidden">
             <Outlet />
           </div>
-          {/* Right source panel - only on workspace */}
-          {isWorkspace && <SourcePanel />}
         </div>
       </div>
     </div>

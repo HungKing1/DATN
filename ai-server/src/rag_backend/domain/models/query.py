@@ -61,16 +61,6 @@ class RankedResult(BaseModel):
     document_id: str | None = None
 
 
-class Citation(BaseModel):
-    """Source attribution for generated content."""
-
-    source: str
-    chunk_id: str
-    content_snippet: str
-    relevance_score: float
-    page_number: int | None = None
-
-
 class GenerationResult(BaseModel):
     """Result from LLM generation."""
 
@@ -87,7 +77,6 @@ class RAGResponse(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     query: str
     answer: str
-    citations: list[Citation] = Field(default_factory=list)
     model: str = ""
     retrieval_count: int = 0
     reranked_count: int = 0

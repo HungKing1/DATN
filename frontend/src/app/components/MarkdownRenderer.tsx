@@ -61,8 +61,7 @@ function preprocessMarkdown(content: string): string {
     result.push(line);
   }
 
-  // Chuyển citation refs [1] → [[1]](cite:1)
-  return result.join('\n').replace(/\[(\d+)\]/g, '[[$1]](cite:$1)');
+  return result.join('\n');
 }
 
 export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
@@ -90,12 +89,9 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
           },
           ul: ({ node, ...props }) => <ul className="md-ul" {...props} />,
           ol: ({ node, ...props }) => <ol className="md-ol" {...props} />,
-          a: ({ node, href, children, ...props }) => {
-            if (href?.startsWith('cite:')) {
-              return <sup className="citation-ref">{children}</sup>;
-            }
-            return <a href={href} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
-          },
+          a: ({ node, href, children, ...props }) => (
+            <a href={href} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer" {...props}>{children}</a>
+          ),
           code: ({ node, className, children, ...props }: any) => {
             // Check if it's inline or a block
             // ReactMarkdown passes inline as a boolean or we can infer it

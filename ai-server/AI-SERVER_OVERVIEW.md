@@ -67,7 +67,7 @@ ai-server/
     │   ├── exceptions.py         # RAGBackendError + các custom exceptions
     │   ├── models/
     │   │   ├── document.py       # LegalChunkMetadata, LegalChunk, IngestionResult
-    │   │   ├── query.py          # Query, RAGResponse, Citation, RankedResult, QueryType
+    │   │   ├── query.py          # Query, RAGResponse, RankedResult, QueryType
     │   │   ├── agent_state.py    # DeepAgentState, ResearchFinding, vv.
     │   │   └── embedding.py      # Embedding value object
     │   └── interfaces/

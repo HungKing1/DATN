@@ -112,7 +112,6 @@ PUT    /api/v1/conversations/{id}          — Cập nhật conversation
 DELETE /api/v1/conversations/{id}          — Xóa conversation
 GET    /api/v1/conversations/{id}/messages — Lấy lịch sử chat
 DELETE /api/v1/conversations/{id}/messages — Xóa lịch sử chat
-GET    /api/v1/conversations/{id}/suggestions — Lấy gợi ý câu hỏi
 POST   /api/v1/chat                    — Gửi tin nhắn (gọi AI Server)
 ```
 

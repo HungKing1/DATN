@@ -104,13 +104,6 @@
   font-style: italic;
 }
 
-.markdown-body .citation-ref {
-  font-size: 0.65rem;
-  vertical-align: super;
-  color: #3B82F6;
-  font-weight: 600;
-  cursor: pointer;
-}
 
 /* Scrollbar styles */
 * {

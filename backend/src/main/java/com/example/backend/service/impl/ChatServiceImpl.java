@@ -92,12 +92,7 @@ public class ChatServiceImpl implements ChatService {
                     .conversationId(conversationId)
                     .role("ai")
                     .content(answer)
-                    .citations(List.of()) // Agent mode trả về raw text, không có structured citations
-                    .confidence(null)
-                    .suggestedQuestions(List.of(
-                            "Phân tích thêm chi tiết điều luật này?",
-                            "Có trường hợp ngoại lệ nào không?",
-                            "Mức xử phạt cụ thể là gì?"))
+
                     .build();
 
         } catch (Exception e) {
@@ -112,8 +107,7 @@ public class ChatServiceImpl implements ChatService {
                 .role("ai")
                 .content("⚠️ Hệ thống AI tạm thời không khả dụng. Vui lòng thử lại sau.\n\n"
                         + "Câu hỏi của bạn: \"" + content + "\"")
-                .confidence(0.0)
-                .suggestedQuestions(List.of("Thử lại câu hỏi"))
+
                 .build();
     }
 }

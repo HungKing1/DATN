@@ -11,8 +11,6 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
-import java.util.List;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -30,11 +28,6 @@ public class Message {
 
     private String content;
 
-    private List<Citation> citations;
-
-    private Double confidence;
-
-    private List<String> suggestedQuestions;
 
     @CreatedDate
     private LocalDateTime createdAt;
@@ -42,15 +35,4 @@ public class Message {
     @LastModifiedDate
     private LocalDateTime updatedAt;
     
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Citation {
-        private String clauseId;
-        private String lawName;
-        private String articleInfo;
-        private String text;
-        private Double similarityScore;
-    }
 }

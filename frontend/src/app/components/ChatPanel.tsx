@@ -111,23 +111,6 @@ function MessageBubble({ message, isStreaming, streamContent }: {
           </div>
         )}
 
-        {/* Suggested questions */}
-        {!isStreaming && message.suggestedQuestions && message.suggestedQuestions.length > 0 && (
-          <div className="mt-2 ml-1 flex flex-wrap gap-1.5">
-            {message.suggestedQuestions.map((q, idx) => (
-              <motion.button
-                key={idx}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 + idx * 0.05 }}
-                onClick={() => sendMessage(q)}
-                className="px-3 py-1.5 bg-card border border-border rounded-full text-xs text-muted-foreground hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-150"
-              >
-                {q}
-              </motion.button>
-            ))}
-          </div>
-        )}
       </div>
     </motion.div>
   );

@@ -2,22 +2,11 @@ export type LawStatus = 'draft' | 'active' | 'archived';
 
 
 
-export interface Citation {
-  id: string;
-  clauseId: string;
-  lawName: string;
-  articleInfo: string; // e.g. "Article 3, Clause 1"
-  text: string;
-  similarityScore?: number;
-}
 
 export interface Message {
   id: string;
   role: 'user' | 'ai';
   content: string;
-  citations?: Citation[];
-  confidence?: number;
-  suggestedQuestions?: string[];
   timestamp: string;
   isStreaming?: boolean;
 }
@@ -37,7 +26,6 @@ export interface Note {
   id: string;
   content: string;
   clauseId?: string;
-  citationId?: string;
   createdAt: string;
   color: 'yellow' | 'blue' | 'green' | 'pink';
 }
@@ -45,7 +33,6 @@ export interface Note {
 export interface AppSettings {
   aiModel: 'gpt-4o' | 'gpt-4-turbo' | 'claude-3-5-sonnet' | 'gemini-pro';
   responseStyle: 'concise' | 'detailed' | 'academic';
-  citationsEnabled: boolean;
   studyReminders: boolean;
   soundEffects: boolean;
   compactMode: boolean;

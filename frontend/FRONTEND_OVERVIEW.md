@@ -56,7 +56,6 @@ frontend/
 │       │   ├── Layout.tsx         # Main app shell (Sidebar + Content + SourcePanel)
 │       │   ├── LeftSidebar.tsx    # Danh sách Conversations, điều hướng
 │       │   ├── ChatPanel.tsx      # Chat UI chính, streaming effect
-│       │   ├── SourcePanel.tsx    # Hiển thị Citations từ RAG
 
 │       │   ├── SettingsPage.tsx   # Cài đặt người dùng
 │       │   ├── WorkspacePage.tsx  # Trang chính khi vào app
@@ -188,11 +187,7 @@ adminApi.checkAiHealth()                     // GET /admin/ai-health
 ## 📐 6. Types chính (`src/app/types.ts`)
 
 ```typescript
-// Entities cốt lõi của dự án
-Citation
-Message  // { id, role: 'user'|'ai', content, citations?, confidence?, suggestedQuestions?, timestamp, isStreaming? }
-Conversation // { id, title, createdAt, messageCount }
-Note, AppSettings
+Message  // { id, role: 'user'|'ai', content, timestamp, isStreaming? }
 UserResponse // { id, email, role }  — từ auth.api.ts
 ```
 
@@ -237,7 +232,7 @@ npm run build
 - Toàn bộ routing (Auth, Main App, Admin) với Route Guards
 - AuthContext: đăng nhập/đăng xuất bằng cookie session
 - AppContext: quản lý Conversations, Chat, streaming effect
-- UI chính: Layout, LeftSidebar, ChatPanel, SourcePanel
+- UI chính: Layout, LeftSidebar, ChatPanel
 - Chức năng Note, Conversations
 - Admin pages: AdminDashboard, IngestionPage
 - Mock system (MOCK_MODE) để dev offline

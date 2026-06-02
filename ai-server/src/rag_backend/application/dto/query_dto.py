@@ -28,24 +28,12 @@ class QueryResponse(BaseModel):
     id: UUID
     query: str
     answer: str
-    citations: list[CitationDTO] = Field(default_factory=list)
     model: str = ""
     retrieval_count: int = 0
     reranked_count: int = 0
     token_usage: dict[str, int] = Field(default_factory=dict)
 
 
-class CitationDTO(BaseModel):
-    """Citation DTO for source attribution."""
-
-    source: str
-    content_snippet: str
-    relevance_score: float
-    page_number: int | None = None
-
-
-# Fix: Rebuild model after CitationDTO is defined
-QueryResponse.model_rebuild()
 
 
 class StreamChunk(BaseModel):

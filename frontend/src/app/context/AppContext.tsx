@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { Message, Citation, Conversation, Note, AppSettings } from '../types';
+import { Message, Conversation, Note, AppSettings } from '../types';
 
 import { legalService } from '../api/legalService';
 import { chatService } from '../api/chatService';
@@ -25,8 +25,6 @@ interface AppContextValue {
   streamingContent: string;
   sendMessage: (content: string) => Promise<void>;
 
-  // Citations
-  currentCitations: Citation[];
 
   // Notes
   notes: Note[];
@@ -42,8 +40,7 @@ interface AppContextValue {
   sidebarCollapsed: boolean;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebar: () => void;
-  sourcePanelCollapsed: boolean;
-  toggleSourcePanel: () => void;
+
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -60,7 +57,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [streamingMsgId, setStreamingMsgId] = useState<string | null>(null);
   const [streamingContent, setStreamingContent] = useState('');
 
-  const [currentCitations, setCurrentCitations] = useState<Citation[]>([]);
 
   // Notes có thể duy trì local mock state nếu chưa có backend tương ứng hoặc fetch tương tự
   const [notes, setNotes] = useState<Note[]>([]);
@@ -68,14 +64,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>({
     aiModel: 'gpt-4o',
     responseStyle: 'detailed',
-    citationsEnabled: true,
     studyReminders: false,
     soundEffects: false,
     compactMode: false,
   });
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sourcePanelCollapsed, setSourcePanelCollapsed] = useState(false);
+
 
   const messageIdCounter = useRef(100);
 
@@ -220,9 +215,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           [targetNbId]: [...(prev[targetNbId] ?? []), uiAiMsg],
         }));
 
-        if (responseMsg.citations) {
-          setCurrentCitations(responseMsg.citations);
-        }
 
         // Streaming effect cục bộ (Nếu BE hỗ trợ SSE, logic này sẽ sửa thành listen chunks)
         setStreamingMsgId(responseMsg.id);
@@ -285,7 +277,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleSidebar = useCallback(() => setSidebarCollapsed(p => !p), []);
-  const toggleSourcePanel = useCallback(() => setSourcePanelCollapsed(p => !p), []);
+
 
   return (
     <AppContext.Provider
@@ -303,7 +295,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         streamingMsgId,
         streamingContent,
         sendMessage,
-        currentCitations,
+
         notes,
         addNote,
         updateNote,
@@ -313,8 +305,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         sidebarCollapsed,
         setSidebarCollapsed,
         toggleSidebar,
-        sourcePanelCollapsed,
-        toggleSourcePanel,
+
       }}
     >
       {children}
