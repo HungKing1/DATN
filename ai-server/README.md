@@ -1,166 +1,113 @@
-# 🧠 Advanced RAG Backend System
+# AI Server (RAG & Multi-Agent Backend)
 
-Production-ready, highly extensible Retrieval-Augmented Generation backend built with **Clean Architecture** and **SOLID principles**.
+## 1. Giới thiệu
+AI Server là thành phần cốt lõi xử lý các tác vụ trí tuệ nhân tạo của hệ thống, cung cấp khả năng tìm kiếm và trả lời câu hỏi pháp luật (Legal QA) dựa trên kiến trúc RAG (Retrieval-Augmented Generation) và hệ thống tác tử đa nhiệm (Multi-Agent). Backend được xây dựng bằng **FastAPI**, kết hợp với **LangChain** và **LangGraph**, đảm bảo hiệu suất cao, khả năng mở rộng tốt và thiết kế theo chuẩn **Clean Architecture**.
 
-## Tech Stack
+## 2. Chức năng AI
+- **RAG Pipeline (Retrieval-Augmented Generation)**: Tìm kiếm và trích xuất thông tin từ văn bản pháp luật với độ chính xác cao.
+- **Hybrid Search**: Kết hợp tìm kiếm theo từ khóa (BM25) và tìm kiếm ngữ nghĩa (Semantic Search) trên **Weaviate Vector Database**.
+- **Reranking**: Xếp hạng lại kết quả truy xuất bằng mô hình Cross-Encoder để ưu tiên các đoạn văn bản có mức độ liên quan cao nhất.
+- **Multi-Agent System**: Vận hành các tác tử (Agent) thông minh thông qua **LangGraph**, giúp phân tích đa chiều các câu hỏi phức tạp, tự động điều hướng tra cứu và tổng hợp câu trả lời dựa trên ngữ cảnh pháp lý.
+- **Document Ingestion**: Tiền xử lý, chia nhỏ văn bản pháp luật (Chunking), nhúng (Embedding) và tự động đồng bộ tài liệu từ **MongoDB** sang kho lưu trữ **Weaviate**.
 
-- **Python 3.11+** with **FastAPI**
-- **Weaviate** vector database (replaceable)
-- **LangChain** LLM wrapper (replaceable)
-- **uv** for dependency management
+## 3. Kiến trúc hệ thống
+Hệ thống tuân thủ nghiêm ngặt **Clean Architecture**, phân tách rõ ràng các thành phần để tối ưu khả năng bảo trì:
+- **Presentation Layer**: Chứa API Routes, Middleware, và Exception Handlers (FastAPI).
+- **Application Layer**: Chứa Controllers và Use Cases để điều phối luồng xử lý (Business Logic).
+- **Domain Layer**: Định nghĩa Schemas, Entities cốt lõi, Models, và Exceptions.
+- **Infrastructure Layer**: Triển khai kết nối đến Database (MongoDB, Weaviate), External APIs, và các LLM Providers (OpenAI, Gemini, Groq).
+- **Dependency Injection (DI)**: Sử dụng IoC container (trong thư mục `di`) để quản lý và khởi tạo các dependencies.
 
-## Quick Start
+**Luồng xử lý truy vấn (Query Pipeline)**:
+`Request -> FastAPI Route -> AgentController -> MultiAgentService (LangGraph) -> Weaviate (Retrieval) -> Reranker -> LLM -> Response`
 
+## 4. Mô hình sử dụng
+AI Server linh hoạt hỗ trợ nhiều nhà cung cấp LLM và cấu hình mô hình (Model) khác nhau, được thiết lập thông qua `.env`:
+- **LLM Providers (Tùy chọn)**: 
+  - **Google Gemini** (Mặc định): `gemini-3.1-flash-lite-preview`
+  - **OpenAI**: `gpt-4o`
+  - **Groq**: `openai/gpt-oss-120b`
+- **Embedding Model**: `all-MiniLM-L6-v2` (Sentence Transformers).
+- **Reranking Model**: `cross-encoder/ms-marco-MiniLM-L-6-v2`.
+- **Vector Database**: **Weaviate** (Lưu trữ Vector Embedding và thực thi Hybrid Search).
+- **Primary Database**: **MongoDB** (Lưu trữ metadata và raw document gốc).
+
+## 8. API Endpoints
+Base URL mặc định: `http://localhost:8000`
+
+### Agent Query API
+- `POST /api/v1/query/agent/`: Gửi truy vấn cho hệ thống Multi-Agent và RAG. Trả lời câu hỏi kèm theo thông tin trích dẫn pháp lý.
+
+### Ingestion API (Đồng bộ dữ liệu)
+- `GET /api/v1/ingestion/laws`: Liệt kê danh sách các văn bản luật hiện đã được đánh chỉ mục trong Weaviate.
+- `POST /api/v1/ingestion/laws`: Ingest (đồng bộ) một văn bản pháp luật mới từ MongoDB vào Weaviate.
+- `POST /api/v1/ingestion/laws/{so_ky_hieu}/reload`: Cập nhật/ingest lại một văn bản luật (Xóa chunks cũ và thực hiện lại).
+- `DELETE /api/v1/ingestion/laws/{so_ky_hieu}`: Xóa toàn bộ dữ liệu của một văn bản luật khỏi Vector DB.
+
+### Health Check
+- `GET /health`: Kiểm tra trạng thái hoạt động cơ bản của FastAPI server.
+- `GET /health/ready`: Kiểm tra trạng thái kết nối tới các dịch vụ ngoại vi (Weaviate, v.v.).
+
+## 9. Cấu trúc thư mục
+```text
+ai-server/
+├── .env.example            # Mẫu cấu hình các biến môi trường
+├── pyproject.toml          # Tệp cấu hình project và quản lý dependencies của uv
+├── uv.lock                 # Lock file đảm bảo version của dependencies
+└── src/
+    └── rag_backend/        # Thư mục mã nguồn chính (Root module)
+        ├── application/    # Controllers và Use Cases
+        ├── config/         # Quản lý cấu hình, Settings
+        ├── data/           # Triển khai Repositories
+        ├── di/             # Dependency Injection Container
+        ├── domain/         # Schemas, Pydantic Models, Exceptions
+        ├── infrastructure/ # LLM clients, Database clients, Embeddings
+        ├── presentation/   # API Routes (FastAPI), Middlewares
+        └── main.py         # Điểm khởi chạy (Entry point) của ứng dụng
+```
+
+## 10. Cài đặt môi trường
+Dự án yêu cầu **Python 3.11+** và sử dụng **[uv](https://docs.astral.sh/uv/)** làm trình quản lý package và môi trường ảo (nhanh và ổn định hơn pip/poetry).
+
+**Bước 1: Cài đặt `uv`**
+- Windows (PowerShell): `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+- macOS/Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+
+**Bước 2: Cài đặt dependencies**
+Tại thư mục `ai-server`, chạy lệnh sau để `uv` tự động tạo `.venv` và đồng bộ các gói thư viện:
 ```bash
-# 1. Install dependencies
 uv sync
+```
 
-# 2. Configure environment
+**Bước 3: Cấu hình biến môi trường**
+Sao chép file `.env.example` thành `.env`:
+```bash
 cp .env.example .env
-# Edit .env with your API keys and service URLs
+```
+Mở `.env` và thiết lập các thông số chính:
+- Chọn `LLM_PROVIDER` (ví dụ: `google`, `openai`).
+- Điền API Keys: `GOOGLE_API_KEY` hoặc `OPENAI_API_KEY`.
+- Các kết nối Database: `WEAVIATE_URL` (thường là http://localhost:9090) và `MONGODB_URL`.
 
-# 3. Start external services (Docker)
-docker run -d -p 8080:8080 -p 50051:50051 semitechnologies/weaviate:latest
-docker run -d -p 6379:6379 redis:alpine
 
-# 4. Run the application
+## 11. Cách chạy server
+
+**Chạy môi trường Phát triển (Development Mode):**
+Môi trường dev tự động hot-reload khi có thay đổi code.
+```bash
 uv run uvicorn rag_backend.main:app --reload --host 0.0.0.0 --port 8000
-
-# 5. Open API docs
-# http://localhost:8000/docs
 ```
+Sau khi server chạy, truy cập Swagger UI API Docs tại: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## Architecture
-
-```
-src/rag_backend/
-├── config/          # Settings from .env
-├── domain/          # Core: models, interfaces (ABCs), exceptions
-├── application/     # Use cases: services, DTOs, prompt management
-├── infrastructure/  # Implementations: vector DB, LLM, embeddings, etc.
-├── presentation/    # FastAPI: routes, controllers, schemas, middlewares
-├── di/              # Dependency Injection container
-└── main.py          # App entry point
-```
-
-## Key Design Patterns
-
-| Pattern | Where | Purpose |
-|---------|-------|---------|
-| Factory | `InputProcessorFactory` | Resolve processor by file extension |
-| Strategy | `ChunkingStrategy` | Runtime-swappable chunking |
-| Adapter | LLM, Embedding, Input processors | Wrap external libs behind interfaces |
-| Repository | `VectorRepository` | Abstract vector DB operations |
-| DI | `container.py` + FastAPI | Decouple all layers |
-
-## Data Flow
-
-```
-Ingestion:  File → InputProcessor → Chunker → Embedder → VectorRepository
-Query:      Text → QueryRewriter → Embedder → VectorSearch → Reranker → ContextBuilder → LLM → Response
-```
-
----
-
-## 🔌 Extensibility Examples
-
-### Adding a New Input Type (e.g., HTML)
-
-```python
-# 1. Create: infrastructure/input_processors/html_processor.py
-from rag_backend.domain.interfaces.input_processor import InputProcessor
-
-class HTMLProcessor(InputProcessor):
-    def supported_extensions(self) -> list[str]:
-        return [".html", ".htm"]
-
-    async def process(self, source, **kwargs):
-        from bs4 import BeautifulSoup
-        html = source.read_text()
-        text = BeautifulSoup(html, "html.parser").get_text()
-        return ProcessedDocument(content=text, ...)
-
-# 2. Register in di/container.py:
-factory.register(HTMLProcessor())
-# Done! No other files modified.
-```
-
-### Switching Vector Database (e.g., to Qdrant)
-
-```python
-# 1. Create: infrastructure/vector_db/qdrant_repository.py
-class QdrantRepository(VectorRepository):
-    async def store(self, chunks, collection_name): ...
-    async def search(self, query_vector, collection_name, top_k, filters): ...
-    async def hybrid_search(self, ...): ...
-    # ... implement all VectorRepository methods
-
-# 2. In di/container.py, change ONE line:
-def vector_repository(self) -> VectorRepository:
-    return QdrantRepository(url=self._settings.qdrant_url)
-```
-
-### Switching LLM Provider (e.g., to Ollama)
-
-```python
-# 1. Create: infrastructure/llm/ollama_provider.py
-class OllamaProvider(LLMProvider):
-    async def generate(self, prompt, **kwargs) -> GenerationResult: ...
-    async def generate_stream(self, prompt, **kwargs) -> AsyncIterator[str]: ...
-
-# 2. In di/container.py, change ONE line:
-def llm_provider(self) -> LLMProvider:
-    return OllamaProvider(model="llama3")
-```
-
-### Adding a New Chunking Strategy
-
-```python
-# 1. Create: infrastructure/chunking/sliding_window_chunker.py
-class SlidingWindowChunker(ChunkingStrategy):
-    def get_strategy_name(self) -> str:
-        return "sliding_window"
-    async def chunk(self, document, chunk_size, chunk_overlap): ...
-
-# 2. Add to settings enum and container switch
-```
-
----
-
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/v1/ingestion/upload` | Upload & ingest a document |
-| `POST` | `/api/v1/ingestion/upload/batch` | Batch upload & ingest |
-| `DELETE` | `/api/v1/ingestion/document` | Delete a document |
-| `GET` | `/api/v1/ingestion/collections` | List collections |
-| `POST` | `/api/v1/ingestion/collections` | Create a collection |
-| `POST` | `/api/v1/query/` | RAG query |
-| `POST` | `/api/v1/query/stream` | Streaming RAG query |
-| `GET` | `/health` | Health check |
-
----
-
-## 🚀 RAG Best Practices
-
-### Prompt Engineering
-- Use explicit instructions about source citation
-- Include few-shot examples in system prompts for consistent output format
-- Separate context from instructions clearly
-
-### Large Documents
-- Use batched embedding (configured via `embedding_batch_size`)
-- Leverage Celery for async background ingestion
-- Set `max_document_size_mb` to prevent memory issues
-
-### Improving Retrieval
-- Enable hybrid search (`hybrid_alpha=0.5`) for better recall
-- Use cross-encoder reranking for precision
-- Implement query rewriting for incomplete queries
-
-### Evaluating RAG Performance
-- Track retrieval relevance metrics (nDCG, MRR)
-- Monitor answer faithfulness (grounded in retrieved context)
-- Log token usage for cost optimization
-- A/B test prompt versions via `PromptManager`
+## 12. Logging & Monitoring
+- **Application Logging**: AI Server sử dụng thư viện `structlog` để định dạng và ghi log cấu trúc rõ ràng. Có thể tùy chỉnh độ chi tiết của log qua biến môi trường `LOG_LEVEL` (`INFO`, `DEBUG`, `ERROR`).
+- **API Request Monitoring**: Sử dụng Custom Middleware (`LoggingMiddleware`) để log mọi thông tin request/response (phương thức HTTP, đường dẫn, thời gian phản hồi, trạng thái).
+- **LLM & Agent Tracing (LangSmith)**:
+  - Dự án được tích hợp sẵn cấu hình **LangSmith** giúp debug luồng thực thi phức tạp của LangGraph/LangChain và theo dõi chi phí sử dụng API.
+  - Để kích hoạt, cấu hình trong `.env`:
+    ```env
+    LANGCHAIN_TRACING_V2=true
+    LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
+    LANGCHAIN_API_KEY="<your-langsmith-api-key>"
+    LANGCHAIN_PROJECT="<your-project-name>"
+    ```
