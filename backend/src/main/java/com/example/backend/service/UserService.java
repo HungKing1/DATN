@@ -5,5 +5,4 @@ import com.example.backend.entity.User;
 
 public interface UserService {
     UserResponse getCurrentUser(String userId);
-    UserResponse updateSettings(String userId, User.Settings settings);
 }

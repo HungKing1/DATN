@@ -30,24 +30,10 @@ public class User {
     @Builder.Default
     private String role = "ROLE_USER";
 
-
-    private Settings settings;
-
     @CreatedDate
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Settings {
-        @Builder.Default
-        private String aiModel = "gpt-4o";
-        @Builder.Default
-        private boolean compactMode = false;
-    }
 }

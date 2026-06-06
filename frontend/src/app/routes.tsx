@@ -1,24 +1,23 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 
 // Layouts
-import { Layout as MainLayout } from './components/Layout';
+import { Layout as MainLayout } from './layouts/MainLayout';
 import { AuthLayout } from './layouts/AuthLayout';
 import { AdminLayout } from './layouts/AdminLayout';
 
 // Route Guards
-import { ProtectedRoute, AdminRoute } from './components/RouteGuards';
+import { ProtectedRoute, AdminRoute } from './guards/RouteGuards';
 
 // Existing Pages (MainApp components inside MainLayout)
-import { WorkspacePage } from './components/WorkspacePage';
-import { SettingsPage } from './components/SettingsPage';
-import { LegalDocumentPage } from './components/LegalDocumentPage';
-import { LegalDocumentViewer } from './components/LegalDocumentViewer';
+import { WorkspacePage } from './pages/workspace/WorkspacePage';
+import { LegalDocumentPage } from './pages/legal/LegalDocumentPage';
+import { LegalDocumentViewer } from './pages/legal/LegalDocumentViewer';
 
 // New Pages
-import { LoginPage } from './pages/Auth/LoginPage';
-import { SignupPage } from './pages/Auth/SignupPage';
-import { AdminDashboard } from './pages/Admin/AdminDashboard';
-import { IngestionPage } from './pages/Admin/IngestionPage';
+import { LoginPage } from './pages/auth/LoginPage';
+import { SignupPage } from './pages/auth/SignupPage';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { IngestionPage } from './pages/admin/IngestionPage';
 
 export const router = createBrowserRouter([
   // ---------------------------------------------
@@ -62,7 +61,6 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, Component: WorkspacePage },
-      { path: 'settings', Component: SettingsPage },
       { path: 'legal', Component: LegalDocumentPage },
       { path: 'legal/:soKyHieu', Component: LegalDocumentViewer },
     ],

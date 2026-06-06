@@ -13,9 +13,9 @@ import {
 import {
   Tooltip, TooltipContent, TooltipTrigger,
 } from '../../components/ui/tooltip';
-import { adminApi, LawInfo } from '../../api/adminService';
-import { legalService } from '../../api/legalService';
-import { LegalDocumentSummary } from '../../types';
+import { adminApi } from '../../api/adminApi';
+import { legalService } from '../../api/legalApi';
+import { LegalDocumentSummary, LawInfo } from '../../types';
 
 export function IngestionPage() {
   const [laws, setLaws] = useState<LawInfo[]>([]);

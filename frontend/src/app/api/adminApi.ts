@@ -1,32 +1,5 @@
 import { fetchApi } from './apiClient';
-
-// ─── Types (map từ Weaviate LegalChunk collection) ────────────────────────────
-
-export interface LawInfo {
-  so_ky_hieu: string;
-  ten_day_du: string;
-  loai_van_ban: string;
-  chunk_count: number;
-}
-
-/** Trả về khi import Law từ MongoDB */
-export interface LawCreateResponse {
-  so_ky_hieu: string;
-  ten_day_du: string;
-  chunks_stored: number;
-  success: boolean;
-  error_message?: string;
-  status: string;
-}
-
-export interface AiHealthResponse {
-  status: string;
-  services?: {
-    ai_server?: string;
-    weaviate?: string;
-  };
-}
-
+import { LawInfo, LawCreateResponse, AiHealthResponse } from '../types';
 // ─── API calls — all go through Backend Java (port 8080) ─────
 
 export const adminApi = {
@@ -59,17 +32,6 @@ export const adminApi = {
       method: 'DELETE',
     }),
 
-  // ── Document Chunk Management ────────────────────────────
-
-  /** Xóa 1 document (các chunks trong LawChunk) theo document_id */
-  deleteDocument: (documentId: string): Promise<string> =>
-    fetchApi<string>('/admin/documents', {
-      method: 'DELETE',
-      body: JSON.stringify({
-        document_id: documentId,
-        collection_name: 'LegalChunk',
-      }),
-    }),
 
   // ── AI Server Health ───────────────────────────────────
 

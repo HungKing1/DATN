@@ -22,12 +22,4 @@ public class UserServiceImpl implements UserService {
         return UserMapper.toDto(user);
     }
 
-    @Override
-    public UserResponse updateSettings(String userId, User.Settings settings) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        user.setSettings(settings);
-        userRepository.save(user);
-        return UserMapper.toDto(user);
-    }
 }

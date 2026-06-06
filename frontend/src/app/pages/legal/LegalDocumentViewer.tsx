@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
-import { legalService } from '../api/legalService';
-import { LegalDocumentDetail, ArticleItem } from '../types';
-import { MarkdownRenderer } from './MarkdownRenderer';
-import { Button } from './ui/button';
+import { legalService } from '../../api/legalApi';
+import { LegalDocumentDetail, ArticleItem } from '../../types';
+import { MarkdownRenderer } from '../../components/MarkdownRenderer';
+import { Button } from '../../components/ui/button';
 
 type TocTreeNode = {
   id: string;

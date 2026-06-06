@@ -6,7 +6,8 @@ import {
   FileText, Hash, Layers,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { adminApi, LawInfo } from '../../api/adminService';
+import { adminApi } from '../../api/adminApi';
+import { LawInfo } from '../../types';
 
 interface DashboardStats {
   totalLaws: number;

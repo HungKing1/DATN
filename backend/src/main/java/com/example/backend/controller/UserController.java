@@ -20,10 +20,4 @@ public class UserController {
     public ApiResponse<UserResponse> getMe(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return ApiResponse.success(userService.getCurrentUser(userDetails.getId()));
     }
-
-    @PutMapping("/me/settings")
-    public ApiResponse<UserResponse> updateSettings(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                                    @RequestBody User.Settings settings) {
-        return ApiResponse.success(userService.updateSettings(userDetails.getId(), settings));
-    }
 }

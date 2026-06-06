@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { Message, Conversation, Note, AppSettings } from '../types';
+import { Message, Conversation } from '../types';
 
-import { legalService } from '../api/legalService';
-import { chatService } from '../api/chatService';
-import { settingsService } from '../api/settingsService';
+import { chatService } from '../api/chatApi';
+
 import { useAuth } from './AuthContext';
 
 interface ReferencePanelState {
@@ -33,15 +32,6 @@ interface AppContextValue {
   sendMessage: (content: string) => Promise<void>;
 
 
-  // Notes
-  notes: Note[];
-  addNote: (note: Omit<Note, 'id' | 'createdAt'>) => void;
-  updateNote: (id: string, content: string) => void;
-  deleteNote: (id: string) => void;
-
-  // Settings
-  settings: AppSettings;
-  updateSettings: (updates: Partial<AppSettings>) => Promise<void>;
 
   // Layout
   sidebarCollapsed: boolean;
@@ -71,17 +61,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [streamingContent, setStreamingContent] = useState('');
 
 
-  // Notes có thể duy trì local mock state nếu chưa có backend tương ứng hoặc fetch tương tự
-  const [notes, setNotes] = useState<Note[]>([]);
-
-  const [settings, setSettings] = useState<AppSettings>({
-    aiModel: 'gpt-4o',
-    responseStyle: 'detailed',
-    studyReminders: false,
-    soundEffects: false,
-    compactMode: false,
-  });
-
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const [referencePanel, setReferencePanel] = useState<ReferencePanelState>({ isOpen: false, soKyHieu: '', targetId: '' });
@@ -108,9 +87,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Tải dữ liệu ban đầu từ Backend
     const fetchInitialData = async () => {
       try {
-        const [conversationsData, settingsData] = await Promise.all([
-          chatService.getConversations().catch(() => []),
-          settingsService.getSettings().catch(() => null)
+        const [conversationsData] = await Promise.all([
+          chatService.getConversations().catch(() => [])
         ]);
 
 
@@ -120,10 +98,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           // Do not auto-select the first conversation so user sees the general "New Chat" page
           // Unless it was already set by URL params
           setActiveConversationId(prev => prev ? prev : '');
-        }
-
-        if (settingsData) {
-          setSettings(settingsData);
         }
       } catch (e) {
         console.error("Failed to load initial data", e);
@@ -292,34 +266,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [activeConversationId]
   );
 
-
-  const addNote = useCallback((note: Omit<Note, 'id' | 'createdAt'>) => {
-    const newNote: Note = {
-      ...note,
-      id: `note-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-    setNotes(prev => [newNote, ...prev]);
-  }, []);
-
-  const updateNote = useCallback((id: string, content: string) => {
-    setNotes(prev => prev.map(n => n.id === id ? { ...n, content } : n));
-  }, []);
-
-  const deleteNote = useCallback((id: string) => {
-    setNotes(prev => prev.filter(n => n.id !== id));
-  }, []);
-
-  const updateSettings = useCallback(async (updates: Partial<AppSettings>) => {
-    try {
-      const updatedParams = await settingsService.updateSettings(updates);
-      setSettings(updatedParams);
-    } catch (e) {
-      // Fallback
-      setSettings(prev => ({ ...prev, ...updates }));
-    }
-  }, []);
-
   const toggleSidebar = useCallback(() => setSidebarCollapsed(p => !p), []);
 
 
@@ -341,12 +287,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         streamingContent,
         sendMessage,
 
-        notes,
-        addNote,
-        updateNote,
-        deleteNote,
-        settings,
-        updateSettings,
         sidebarCollapsed,
         setSidebarCollapsed,
         toggleSidebar,

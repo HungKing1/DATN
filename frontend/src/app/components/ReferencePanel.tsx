@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { legalService } from '../api/legalService';
+import { legalService } from '../api/legalApi';
 import { LegalDocumentDetail, ArticleItem } from '../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { Button } from './ui/button';

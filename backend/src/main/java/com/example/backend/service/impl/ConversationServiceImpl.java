@@ -56,14 +56,6 @@ public class ConversationServiceImpl implements ConversationService {
         return messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
     }
 
-    @Override
-    public void deleteConversationMessages(String conversationId, String userId) {
-        Conversation conversation = getConversationAndVerifyOwner(conversationId, userId);
-        messageRepository.deleteByConversationId(conversationId);
-        conversation.setMessageCount(0);
-        conversationRepository.save(conversation);
-    }
-
     private Conversation getConversationAndVerifyOwner(String conversationId, String userId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found"));

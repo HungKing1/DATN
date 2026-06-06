@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router';
-import { useApp } from '../context/AppContext';
-import { ChatPanel } from './ChatPanel';
+import { useApp } from '../../context/AppContext';
+import { ChatPanel } from '../../components/ChatPanel';
 
 export function WorkspacePage() {
   const [searchParams, setSearchParams] = useSearchParams();

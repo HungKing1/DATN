@@ -1,6 +1,6 @@
 import { Outlet, useLocation, Navigate } from 'react-router';
-import { LeftSidebar } from './LeftSidebar';
-import { ReferencePanel } from './ReferencePanel';
+import { LeftSidebar } from '../components/LeftSidebar';
+import { ReferencePanel } from '../components/ReferencePanel';
 import { useAuth } from '../context/AuthContext';
 
 export function Layout() {

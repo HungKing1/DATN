@@ -1,14 +1,5 @@
 import { fetchApi } from './apiClient';
-import { LegalDocumentSummary, LegalDocumentDetail } from '../types';
-
-export interface PageResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-}
-
+import { LegalDocumentSummary, LegalDocumentDetail, PageResponse } from '../types';
 export const getLegalDocumentList = (page = 0, size = 10) =>
   fetchApi<PageResponse<LegalDocumentSummary>>(
     `/legal/documents?page=${page}&size=${size}`

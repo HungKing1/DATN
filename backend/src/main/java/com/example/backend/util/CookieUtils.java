@@ -4,37 +4,48 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 
 @Component
 public class CookieUtils {
 
-    public static final String SESSION_COOKIE_NAME = "SESSION_ID";
+    @Value("${auth.cookie.name}")
+    private String cookieName;
+
+    @Value("${auth.cookie.max-age}")
+    private int cookieMaxAge;
+
+    @Value("${auth.cookie.secure}")
+    private boolean cookieSecure;
+
+    @Value("${auth.cookie.http-only}")
+    private boolean cookieHttpOnly;
 
     public String extractSessionId(HttpServletRequest request) {
         if (request.getCookies() == null) {
             return null;
         }
         for (Cookie cookie : request.getCookies()) {
-            if (SESSION_COOKIE_NAME.equals(cookie.getName())) {
+            if (cookieName.equals(cookie.getName())) {
                 return cookie.getValue();
             }
         }
         return null;
     }
 
-    public void addSessionCookie(HttpServletResponse response, String sessionId, int maxAge) {
-        Cookie cookie = new Cookie(SESSION_COOKIE_NAME, sessionId);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // Set to true in production if HTTPS
+    public void addSessionCookie(HttpServletResponse response, String sessionId) {
+        Cookie cookie = new Cookie(cookieName, sessionId);
+        cookie.setHttpOnly(cookieHttpOnly);
+        cookie.setSecure(cookieSecure);
         cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
+        cookie.setMaxAge(cookieMaxAge);
         response.addCookie(cookie);
     }
 
     public void clearSessionCookie(HttpServletResponse response) {
-        Cookie cookie = new Cookie(SESSION_COOKIE_NAME, null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false);
+        Cookie cookie = new Cookie(cookieName, null);
+        cookie.setHttpOnly(cookieHttpOnly);
+        cookie.setSecure(cookieSecure);
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);

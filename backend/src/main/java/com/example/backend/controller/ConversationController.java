@@ -51,10 +51,4 @@ public class ConversationController {
         return ApiResponse.success(conversationService.getConversationMessages(id, userDetails.getId()));
     }
 
-    @DeleteMapping("/{id}/messages")
-    public ApiResponse<String> deleteMessages(@PathVariable String id,
-                                              @AuthenticationPrincipal CustomUserDetails userDetails) {
-        conversationService.deleteConversationMessages(id, userDetails.getId());
-        return ApiResponse.success("Messages deleted");
-    }
 }

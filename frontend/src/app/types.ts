@@ -1,8 +1,5 @@
 export type LawStatus = 'draft' | 'active' | 'archived';
 
-
-
-
 export interface Message {
   id: string;
   role: 'user' | 'ai';
@@ -10,10 +7,6 @@ export interface Message {
   timestamp: string;
   isStreaming?: boolean;
 }
-
-
-
-
 
 export interface Conversation {
   id: string;
@@ -30,13 +23,6 @@ export interface Note {
   color: 'yellow' | 'blue' | 'green' | 'pink';
 }
 
-export interface AppSettings {
-  aiModel: 'gpt-4o' | 'gpt-4-turbo' | 'claude-3-5-sonnet' | 'gemini-pro';
-  responseStyle: 'concise' | 'detailed' | 'academic';
-  studyReminders: boolean;
-  soundEffects: boolean;
-  compactMode: boolean;
-}
 
 export interface LegalDocumentSummary {
   soKyHieu: string;
@@ -91,4 +77,38 @@ export interface LegalDocumentDetail {
   canCuBanHanh: string[];
   toc: TocGroup[];
   articles: ArticleItem[];
+}
+
+// ─── Shared API Responses ────────────────────────────
+
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export interface LawInfo {
+  so_ky_hieu: string;
+  ten_day_du: string;
+  loai_van_ban: string;
+  chunk_count: number;
+}
+
+export interface LawCreateResponse {
+  so_ky_hieu: string;
+  ten_day_du: string;
+  chunks_stored: number;
+  success: boolean;
+  error_message?: string;
+  status: string;
+}
+
+export interface AiHealthResponse {
+  status: string;
+  services?: {
+    ai_server?: string;
+    weaviate?: string;
+  };
 }

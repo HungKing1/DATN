@@ -216,7 +216,7 @@ export function LeftSidebar() {
         )}
 
         <div className="flex-1 overflow-y-auto px-2 pb-2 scrollbar-thin flex flex-col gap-0.5">
-          {conversations.map(nb => (
+          {[...conversations].reverse().map(nb => (
             <ConversationItem
               key={nb.id}
               conversation={nb}
@@ -257,16 +257,6 @@ export function LeftSidebar() {
         {!sidebarCollapsed && (
           <>
             <button
-              onClick={() => navigate('/settings')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${location.pathname === '/settings'
-                ? 'bg-blue-50 text-blue-600'
-                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                }`}
-            >
-              <Settings className="w-4 h-4 flex-shrink-0" />
-              <span>Cài đặt</span>
-            </button>
-            <button
               onClick={logout}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
             >
@@ -278,13 +268,6 @@ export function LeftSidebar() {
 
         {sidebarCollapsed && (
           <>
-            <button
-              onClick={() => navigate('/settings')}
-              className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-accent text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              title="Cài đặt"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
             <button
               onClick={logout}
               className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors mt-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"

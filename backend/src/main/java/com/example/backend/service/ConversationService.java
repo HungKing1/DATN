@@ -13,5 +13,4 @@ public interface ConversationService {
     void deleteConversation(String conversationId, String userId);
     
     List<Message> getConversationMessages(String conversationId, String userId);
-    void deleteConversationMessages(String conversationId, String userId);
 }

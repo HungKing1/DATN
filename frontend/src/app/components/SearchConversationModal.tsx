@@ -37,13 +37,15 @@ export function SearchConversationModal({ isOpen, onClose }: SearchConversationM
 
   if (!isOpen) return null;
 
+  // Đảo ngược mảng để hiển thị từ mới nhất đến cũ nhất
+  const reversedConversations = [...conversations].reverse();
+
   // Lọc 5 cuộc trò chuyện gần nhất cho phần Today
-  // Giả sử mảng conversations đã được sắp xếp từ mới đến cũ
-  const todayConversations = conversations.slice(0, 5);
-  
+  const todayConversations = reversedConversations.slice(0, 5);
+
   // Lọc theo searchTerm
-  const filteredConversations = searchTerm.trim() 
-    ? conversations.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredConversations = searchTerm.trim()
+    ? reversedConversations.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase()))
     : todayConversations;
 
   const handleCreateNewChat = async () => {

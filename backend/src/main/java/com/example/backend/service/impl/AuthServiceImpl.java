@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -27,6 +28,9 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final CookieUtils cookieUtils;
 
+    @Value("${auth.cookie.max-age}")
+    private int cookieMaxAge;
+
     @Override
     public void register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -37,7 +41,6 @@ public class AuthServiceImpl implements AuthService {
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .role("ROLE_USER")
-                .settings(new User.Settings())
                 .build();
         userRepository.save(user);
     }
@@ -52,18 +55,17 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String sessionId = UUID.randomUUID().toString();
-        int maxAge = 7 * 24 * 60 * 60; // 7 days
 
         UserAuthSession session = UserAuthSession.builder()
                 .userId(user.getId())
                 .sessionId(sessionId)
                 .userAgent(httpRequest.getHeader("User-Agent"))
                 .ip(httpRequest.getRemoteAddr())
-                .expiresAt(LocalDateTime.now().plusSeconds(maxAge))
+                .expiresAt(LocalDateTime.now().plusSeconds(cookieMaxAge))
                 .build();
         sessionRepository.save(session);
 
-        cookieUtils.addSessionCookie(httpResponse, sessionId, maxAge);
+        cookieUtils.addSessionCookie(httpResponse, sessionId);
 
         return user;
     }
