@@ -6,7 +6,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir uv
 
 # Copy dependency files
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock README.md ./
 
 # Install production dependencies
 RUN uv sync --no-dev --frozen
