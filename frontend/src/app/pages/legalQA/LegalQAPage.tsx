@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router';
 import { legalQaApi } from '../../api/legalQaApi';
 import { LegalQAItem } from '../../components/legalQA/LegalQAItem';
 import { LegalQA } from '../../types';
+import { useApp } from '../../context/AppContext';
 import { Loader2, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -13,8 +14,11 @@ export function LegalQAPage() {
   const [legalQAs, setLegalQAs] = useState<LegalQA[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { closeReference } = useApp();
 
   useEffect(() => {
+    closeReference();
+
     if (!soKyHieu) {
       setLegalQAs([]);
       return;
