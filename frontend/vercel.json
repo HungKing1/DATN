@@ -1,15 +1,4 @@
 {
-    "headers": [
-        {
-            "source": "/(.*)",
-            "headers": [
-                {
-                    "key": "Permissions-Policy",
-                    "value": "microphone=*"
-                }
-            ]
-        }
-    ],
     "rewrites": [
         {
             "source": "/api/:path*",
