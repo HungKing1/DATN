@@ -164,6 +164,10 @@ async def main(
     results = []
     scores = []
 
+    reports_dir = Path("tests/evaluation/data/reports")
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    partial_path = reports_dir / "agent_report_partial.json"
+
     for idx, qa in enumerate(qa_pairs):
         question = qa.get("question", "")
         ground_truth = qa.get("ground_truth", "")
@@ -192,6 +196,14 @@ async def main(
             "judge_score": score,
             "judge_reasoning": judgment["reasoning"],
         })
+
+        # --- TỰ ĐỘNG LƯU BẢN NHÁP (DANG DỞ) ---
+        with open(partial_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "status": "partial_interrupted",
+                "processed_count": len(results),
+                "details": results
+            }, f, ensure_ascii=False, indent=2)
 
         # Rate limiting: sleep phần còn lại để đảm bảo không vượt rpm_limit.
         # Nếu agent + judge đã mất đủ min_interval thì không sleep thêm.
@@ -239,9 +251,7 @@ async def main(
         logger.info(f"    {t:<20}: {s}")
     logger.info(f"  Quyết định gate    : {summary['gate_decision']}")
 
-    # Xuất báo cáo
-    reports_dir = Path("tests/evaluation/data/reports")
-    reports_dir.mkdir(parents=True, exist_ok=True)
+    # Xuất báo cáo chính thức
     report_path = reports_dir / f"agent_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
     report = {
@@ -252,8 +262,12 @@ async def main(
 
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
+        
+    # Xóa bản nháp do tiến trình đã hoàn tất thành công
+    if partial_path.exists():
+        partial_path.unlink()
 
-    logger.info(f"Đã lưu báo cáo tại: {report_path}")
+    logger.info(f"Đã lưu báo cáo chính thức tại: {report_path}")
 
 
 if __name__ == "__main__":

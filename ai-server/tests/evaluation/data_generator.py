@@ -86,12 +86,19 @@ async def generate_dataset(num_samples: int = 50, rpm_limit: int = 15):
         return
         
     import random
+    
+    # Ép phân phối attack types: 30 Fact-check, 5 cho 4 loại còn lại
+    assigned_types = ["Fact-check"] * 30
+    for t in ATTACK_TYPES:
+        if t != "Fact-check":
+            assigned_types.extend([t] * 5)
+            
+    # Cập nhật số lượng mẫu dựa trên danh sách ép cứng (50)
+    num_samples = len(assigned_types)
     selected_chunks = random.sample(chunks, min(num_samples, len(chunks)))
     
-    # Phân phối đều các attack type theo round-robin từ phía code —
-    # không để LLM tự chọn (LLM luôn chọn Fact-check vì dễ nhất).
-    n = len(selected_chunks)
-    assigned_types = [ATTACK_TYPES[i % len(ATTACK_TYPES)] for i in range(n)]
+    # Cắt danh sách loại nếu số lượng chunks ít hơn dự kiến
+    assigned_types = assigned_types[:len(selected_chunks)]
     random.shuffle(assigned_types)  # xáo để tránh chunk 1 luôn là Fact-check
     logger.info(f"Phân phối attack types: { {t: assigned_types.count(t) for t in ATTACK_TYPES} }")
 
@@ -152,4 +159,4 @@ async def generate_dataset(num_samples: int = 50, rpm_limit: int = 15):
     logger.info(f"Đã lưu thành công {len(dataset)} câu hỏi vào {output_file}")
 
 if __name__ == "__main__":
-    asyncio.run(generate_dataset(num_samples=10))
+    asyncio.run(generate_dataset(num_samples=50))
