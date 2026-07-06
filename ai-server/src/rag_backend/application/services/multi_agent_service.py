@@ -1,5 +1,3 @@
-"""Multi-Agent Service — Entry point for LangGraph RAG."""
-
 from langchain_core.messages import HumanMessage, ToolMessage
 from langgraph.graph import StateGraph, END
 from langgraph.types import Send
@@ -130,12 +128,8 @@ class MultiAgentService:
                 detail=str(e),
             ) from e
         
-        # extract final answer from last message
-        # NOTE: Google Gemini via LangChain may return content as a list of
-        # content blocks: [{'type': 'text', 'text': '...'}] instead of plain str.
         raw_content = result["messages"][-1].content
         if isinstance(raw_content, list):
-            # Extract and join all text blocks
             final_answer = " ".join(
                 block.get("text", "")
                 for block in raw_content

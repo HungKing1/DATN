@@ -1,5 +1,3 @@
-"""Google Gemini LLM provider adapter using LangChain."""
-
 from __future__ import annotations
 
 import logging
@@ -15,7 +13,6 @@ from rag_backend.domain.models.query import GenerationResult
 logger = logging.getLogger(__name__)
 
 def extract_text_from_message(content) -> str:
-    """Safely extract plain text from an AIMessage content which might be a list of blocks."""
     if isinstance(content, str):
         return content
     
@@ -29,19 +26,6 @@ def extract_text_from_message(content) -> str:
     return str(content)
 
 class GoogleGeminiProvider(LLMProvider):
-    """LLM provider wrapping LangChain's ChatGoogleGenerativeAI (Gemini).
-
-    Uses the same LLMProvider interface as OpenAI/Claude/Ollama.
-    Swap is transparent — no business logic changes needed.
-
-    Usage:
-        provider = GoogleGeminiProvider(
-            api_key="your-google-api-key",
-            model="gemini-3.1-flash-lite-preview",
-        )
-        result = await provider.generate("Hello, Gemini!")
-    """
-
     def __init__(
         self,
         api_key: str,
@@ -67,14 +51,12 @@ class GoogleGeminiProvider(LLMProvider):
         max_tokens: int | None = None,
         **kwargs,
     ) -> GenerationResult:
-        """Generate a response using Google Gemini via LangChain."""
         try:
             messages = []
             if system_prompt:
                 messages.append(SystemMessage(content=system_prompt))
             messages.append(HumanMessage(content=prompt))
 
-            # Override params if provided
             llm = self._llm
             if temperature is not None or max_tokens is not None:
                 llm = self._llm.bind(
@@ -84,7 +66,6 @@ class GoogleGeminiProvider(LLMProvider):
 
             response = await llm.ainvoke(messages)
 
-            # Extract token usage from response metadata
             usage_metadata = response.usage_metadata or {}
             token_usage = response.response_metadata.get("token_usage", {})
 

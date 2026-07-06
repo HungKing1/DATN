@@ -1,9 +1,5 @@
-"""Ingestion API routes — LegalChunk schema."""
-
 from __future__ import annotations
-
 from fastapi import APIRouter, Depends, Request
-
 from rag_backend.presentation.schemas.ingestion_schemas import (
     DeleteLawResponse,
     IngestionResultDto,
@@ -13,16 +9,8 @@ from rag_backend.presentation.schemas.ingestion_schemas import (
 
 router = APIRouter(prefix="/api/v1/ingestion", tags=["Ingestion"])
 
-
 def _get_ingestion_controller(request: Request):
-    """Get IngestionController from app state (injected via DI)."""
     return request.app.state.ingestion_controller
-
-
-
-# ──────────────────────────────────────────────────────────────
-# Law Management Routes
-# ──────────────────────────────────────────────────────────────
 
 @router.post(
     "/laws",

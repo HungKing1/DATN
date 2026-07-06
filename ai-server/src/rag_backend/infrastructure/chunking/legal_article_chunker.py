@@ -1,5 +1,3 @@
-"""Legal Article Chunking Strategy."""
-
 from __future__ import annotations
 
 import logging
@@ -42,10 +40,6 @@ class LegalArticleChunker(ChunkingStrategy):
         self.MIN_TOKENS = min_tokens
         self.MAX_TOKENS = max_tokens
 
-    # ------------------------------------------------------------------ #
-    # Public interface                                                      #
-    # ------------------------------------------------------------------ #
-
     def get_strategy_name(self) -> str:
         return "legal_article"
 
@@ -87,7 +81,7 @@ class LegalArticleChunker(ChunkingStrategy):
             chunk.legal.embedding_text = self._build_embedding_text(
                 chunk, art_map, doc_meta
             )
-            chunk.content = chunk.legal.embedding_text  # Update content for Weaviate and LLM
+            chunk.content = chunk.legal.embedding_text  
 
         logger.info(
             "Chunked %d articles into %d chunks (strategy=%s)",
@@ -96,10 +90,6 @@ class LegalArticleChunker(ChunkingStrategy):
             self.get_strategy_name(),
         )
         return chunks
-
-    # ------------------------------------------------------------------ #
-    # Chunk builders                                                        #
-    # ------------------------------------------------------------------ #
 
     def _make_single_chunk(
         self, art: dict, doc_meta: dict, chunk_index: int
@@ -190,7 +180,6 @@ class LegalArticleChunker(ChunkingStrategy):
         """
         content = art.get("content", "")
 
-        # ── 1. Split at khoản boundaries ─────────────────────────────────
         raw_parts = re.split(r"(?=\n\d+\.\s)", f"\n{content}")
         raw_parts = [p.strip() for p in raw_parts if p.strip()]
         if not raw_parts:
@@ -199,11 +188,8 @@ class LegalArticleChunker(ChunkingStrategy):
         part_sizes = [self._count_tokens(p) for p in raw_parts]
         total      = sum(part_sizes)
 
-        # ── 2. Balanced partitioning ──────────────────────────────────────
-        # Minimum bins so each bin ≤ MAX_TOKENS.
         n_bins = max(1, math.ceil(total / self.MAX_TOKENS))
-        target = total / n_bins          # ideal tokens per bin
-
+        target = total / n_bins          
         bins: list[str]  = []
         cur_parts: list[str] = []
         cur_size  = 0
@@ -218,11 +204,9 @@ class LegalArticleChunker(ChunkingStrategy):
             is_last_bin = len(bins) == n_bins - 1
 
             if new_size > self.MAX_TOKENS:
-                # Hard constraint: must flush
                 bins.append("\n".join(cur_parts))
                 cur_parts, cur_size = [part], size
             elif is_last_bin:
-                # Last bin absorbs everything remaining
                 cur_parts.append(part)
                 cur_size = new_size
             else:
@@ -242,7 +226,6 @@ class LegalArticleChunker(ChunkingStrategy):
         if cur_parts:
             bins.append("\n".join(cur_parts))
 
-        # ── 3. Build LegalChunk per bin ───────────────────────────────────
         chunks: list[LegalChunk] = []
         total = len(bins)
         for j, part in enumerate(bins):
@@ -268,11 +251,6 @@ class LegalArticleChunker(ChunkingStrategy):
             )
         return chunks
 
-
-    # ------------------------------------------------------------------ #
-    # Embedding-text builder                                                #
-    # ------------------------------------------------------------------ #
-
     def _build_embedding_text(
         self,
         chunk: LegalChunk,
@@ -296,7 +274,6 @@ class LegalArticleChunker(ChunkingStrategy):
         doc_header = self._build_doc_header(doc_meta)
         ids = chunk.legal.article_mongo_ids
 
-        # ── SPLIT chunk ──────────────────────────────────────────────────
         if chunk.legal.is_split:
             art = art_map.get(ids[0], {})
             path_str  = self._build_path_str(art)
@@ -305,7 +282,6 @@ class LegalArticleChunker(ChunkingStrategy):
             header = self._join_header_parts(doc_header, path_str, f"{title_goc} {part_label}")
             return f"{header}\n{chunk.content}"
 
-        # ── SINGLE article ───────────────────────────────────────────────
         if not chunk.legal.is_merged:
             art = art_map.get(ids[0], {})
             path_str  = self._build_path_str(art)
@@ -313,11 +289,9 @@ class LegalArticleChunker(ChunkingStrategy):
             header = self._join_header_parts(doc_header, path_str, title_goc)
             return f"{header}\n{art.get('content', '')}"
 
-        # ── MERGED articles — dùng LCP 2 tầng ───────────────────────────
         arts = [art_map.get(aid, {}) for aid in ids]
         common_parts, remaining_per_art = self._find_common_path(arts)
 
-        # Shared header: doc_header + common path (written once)
         common_str    = " - ".join(common_parts)
         shared_header = self._join_header_parts(doc_header, common_str)
 
@@ -357,14 +331,7 @@ class LegalArticleChunker(ChunkingStrategy):
 
         return shared_header + ".\n" + "\n\n".join(blocks)
 
-
-
-    # ------------------------------------------------------------------ #
-    # Helpers                                                               #
-    # ------------------------------------------------------------------ #
-
     def _count_tokens(self, text: str) -> int:
-        """Naive token approximation (word count)."""
         return len(text.split())
 
     def _build_doc_header(self, doc_meta: dict) -> str:
@@ -417,20 +384,17 @@ class LegalArticleChunker(ChunkingStrategy):
         PATH_KEYS = ["phan", "chuong", "muc", "tieu_muc"]
         paths = [art.get("path", {}) or {} for art in arts]
 
-        # Walk hierarchy: include a level in common only if ALL articles
-        # have the exact same value (including None).
         common_parts: list[str] = []
         common_depth = 0
         for key in PATH_KEYS:
             values = [p.get(key) for p in paths]
             if all(v == values[0] for v in values):
                 if values[0] is not None:
-                    common_parts.append(values[0])  # type: ignore[arg-type]
+                    common_parts.append(values[0])
                 common_depth += 1
             else:
                 break
 
-        # Remaining = path values after the common prefix
         remaining_per_art: list[list[str]] = []
         for path in paths:
             remaining = [

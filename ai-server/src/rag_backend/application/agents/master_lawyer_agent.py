@@ -1,5 +1,3 @@
-"""Master Lawyer Agent Node."""
-
 from langchain_core.messages import SystemMessage
 from rag_backend.domain.models.agent_state import DeepAgentState
 
@@ -26,7 +24,6 @@ class MasterLawyerAgent:
         """Execute the master lawyer node."""
         system_prompt = self._prompt_manager.get_prompt("master_lawyer_system")
         
-        # Only inject the system prompt at the beginning
         messages = [SystemMessage(content=system_prompt)] + state["messages"]
         
         response = await self._model_with_tools.ainvoke(messages)

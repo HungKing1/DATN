@@ -1,7 +1,4 @@
-"""Schemas for Agent API."""
-
 from pydantic import BaseModel, Field
-
 
 class AgentQueryRequest(BaseModel):
     """Request schema for Agent query."""

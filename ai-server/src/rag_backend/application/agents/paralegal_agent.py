@@ -1,5 +1,3 @@
-"""Paralegal Agent Node."""
-
 import json
 from langchain_core.messages import HumanMessage, ToolMessage
 from langgraph.prebuilt import create_react_agent
@@ -39,7 +37,6 @@ class ParalegalAgentFactory:
         """Run a parallel instance of Paralegal."""
         system_prompt = self._prompt_manager.get_prompt("paralegal_system")
         
-        # Create a mini react agent for this specific task
         agent = create_react_agent(self._llm, self._tools, prompt=system_prompt)
         
         task_msg = f"Task Description: {input_data['task_description']}\n"
@@ -55,7 +52,6 @@ class ParalegalAgentFactory:
             config={"recursion_limit": self._max_recursion},
         )
         
-        # Extract research findings from tool calls
         chunks_collected = []
         queries_used = []
         
@@ -77,7 +73,6 @@ class ParalegalAgentFactory:
             chunks=chunks_collected,
         )
         
-        # Return state update for Master
         return {
             "research_findings": [finding],
             "messages": [

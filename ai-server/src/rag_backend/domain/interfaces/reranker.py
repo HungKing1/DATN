@@ -1,5 +1,3 @@
-"""Reranker interface — for cross-encoder and other re-ranking strategies."""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

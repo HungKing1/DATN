@@ -1,18 +1,9 @@
-"""Prompt management — prompt templates for RAG system."""
-
 from __future__ import annotations
 
 from typing import Any
 
 
 class PromptManager:
-    """Manages prompt templates with variable substitution.
-
-    Provides a central registry for all prompt templates used in the RAG pipeline.
-    """
-
-
-
     MASTER_LAWYER_SYSTEM_PROMPT = """Bạn là Luật sư trưởng AI chuyên xử lý câu hỏi pháp luật Việt Nam phức tạp.
 
 ## BƯỚC 0 — KIỂM TRA BẮT BUỘC TRƯỚC KHI LÀM BẤT CỨ ĐIỀU GÌ

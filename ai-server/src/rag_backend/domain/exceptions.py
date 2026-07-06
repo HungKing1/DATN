@@ -1,5 +1,3 @@
-"""Domain exceptions — centralized error hierarchy."""
-
 from __future__ import annotations
 
 
@@ -11,14 +9,9 @@ class RAGBackendError(Exception):
         self.detail = detail
         super().__init__(self.message)
 
-
-# --- Document Processing ---
-
 class DocumentProcessingError(RAGBackendError):
     """Raised when document processing fails."""
 
-
-# --- Vector Store ---
 
 class VectorStoreError(RAGBackendError):
     """Raised when vector store operations fail."""
@@ -32,8 +25,6 @@ class CollectionNotFoundError(VectorStoreError):
         self.collection_name = collection_name
 
 
-# --- LLM ---
-
 class LLMProviderError(RAGBackendError):
     """Raised when LLM provider operations fail."""
 
@@ -42,24 +33,12 @@ class LLMRateLimitError(LLMProviderError):
     """Raised when LLM rate limit is exceeded."""
 
 
-# --- Embedding ---
-
 class EmbeddingError(RAGBackendError):
     """Raised when embedding operations fail."""
 
 
-
-
-
-
-
-# --- Reranking ---
-
 class RerankingError(RAGBackendError):
     """Raised when reranking operations fail."""
-
-
-# --- Query ---
 
 
 class QueryPipelineError(RAGBackendError):
@@ -76,10 +55,6 @@ class OutOfDomainError(RAGBackendError):
             detail=f"Hệ thống hiện có: {law_list}",
         )
         self.available_laws = available_laws
-
-
-
-# --- Ingestion ---
 
 class IngestionError(RAGBackendError):
     """Raised when document ingestion fails."""

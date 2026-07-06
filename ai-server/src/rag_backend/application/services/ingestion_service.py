@@ -1,9 +1,3 @@
-"""Ingestion service — orchestrates document ingestion pipeline from MongoDB to Weaviate.
-
-Flow:
-  MongoDBLegalReader → LegalArticleChunker → EmbeddingProvider → VectorRepository
-"""
-
 from __future__ import annotations
 
 import logging

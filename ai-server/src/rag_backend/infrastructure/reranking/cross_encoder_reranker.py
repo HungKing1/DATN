@@ -1,5 +1,3 @@
-"""Cross-encoder reranker using sentence-transformers."""
-
 from __future__ import annotations
 
 import logging

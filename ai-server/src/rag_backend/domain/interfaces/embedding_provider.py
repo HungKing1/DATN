@@ -1,5 +1,3 @@
-"""EmbeddingProvider interface — supports multiple providers."""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

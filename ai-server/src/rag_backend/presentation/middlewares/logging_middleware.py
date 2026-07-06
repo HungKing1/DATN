@@ -1,5 +1,3 @@
-"""Structured logging middleware."""
-
 from __future__ import annotations
 
 import logging
@@ -20,7 +18,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         request_id = str(uuid4())[:8]
         start = time.perf_counter()
 
-        # Add request ID to state for downstream usage
         request.state.request_id = request_id
 
         logger.info(

@@ -1,10 +1,4 @@
-"""FastAPI application entry point.
-
-Run with: uv run uvicorn rag_backend.main:app --reload
-"""
-
 from __future__ import annotations
-
 import logging
 from contextlib import asynccontextmanager
 
@@ -12,7 +6,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-# Load environment variables into os.environ for LangSmith / Langchain
 load_dotenv()
 
 from rag_backend.config.settings import Settings, get_settings
@@ -30,11 +23,8 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan — initialize and teardown resources."""
-    # Settings injected via app.state by create_app (supports test overrides)
     settings: Settings = app.state.settings
 
-    # Configure logging
     logging.basicConfig(
         level=getattr(logging, settings.log_level.upper(), logging.INFO),
         format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
@@ -43,15 +33,12 @@ async def lifespan(app: FastAPI):
 
     logger.info("Starting %s v%s", settings.app_name, settings.app_version)
 
-    # Initialize DI container
     container = init_container(settings)
 
-    # Initialize Weaviate schema (Law + LawChunk collections)
     vector_repo = container.vector_repository()
     await vector_repo.initialize_schema()
     logger.info("Weaviate schema initialized: Law + LawChunk ready")
 
-    # Inject controllers into app state (for route dependency injection)
     app.state.ingestion_controller = container.ingestion_controller()
     app.state.agent_controller = container.agent_controller()
 
@@ -59,9 +46,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown 
     logger.info("Shutting down...")
-    # Close connections
     vector_repo = container.vector_repository()
     if hasattr(vector_repo, "close"):
         await vector_repo.close()
@@ -70,7 +55,6 @@ async def lifespan(app: FastAPI):
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
-    """Application factory — creates and configures the FastAPI app."""
     if settings is None:
         settings = get_settings()
 
@@ -83,10 +67,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Pass settings into lifespan via app.state (single source of truth)
     app.state.settings = settings
 
-    # --- Middleware ---
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -96,17 +78,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.add_middleware(LoggingMiddleware)
 
-    # --- Exception Handlers ---
     app.add_exception_handler(RAGBackendError, rag_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
 
-    # --- Routes ---
     app.include_router(health_routes.router)
     app.include_router(ingestion_routes.router)
     app.include_router(agent_routes.router)
 
     return app
 
-
-# Default app instance
 app = create_app()

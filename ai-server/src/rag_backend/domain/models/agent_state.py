@@ -1,5 +1,3 @@
-"""Domain models for Multi-Agent System."""
-
 from typing import Annotated, TypedDict
 import operator
 

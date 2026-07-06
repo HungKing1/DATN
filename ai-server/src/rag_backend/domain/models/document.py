@@ -1,5 +1,3 @@
-"""Legal domain models — replaces generic document models."""
-
 from __future__ import annotations
 from uuid import UUID, uuid4
 from pydantic import BaseModel, Field

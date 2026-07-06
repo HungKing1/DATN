@@ -1,5 +1,3 @@
-"""Groq LLM provider adapter using langchain_groq."""
-
 from __future__ import annotations
 
 import logging
@@ -15,7 +13,6 @@ from rag_backend.domain.models.query import GenerationResult
 logger = logging.getLogger(__name__)
 
 def extract_text_from_message(content) -> str:
-    """Safely extract plain text from an AIMessage content which might be a list of blocks."""
     if isinstance(content, str):
         return content
     
@@ -29,12 +26,6 @@ def extract_text_from_message(content) -> str:
     return str(content)
 
 class GroqProvider(LLMProvider):
-    """LLM provider wrapping LangChain's ChatGroq.
-
-    Uses Groq's ultra-fast inference API with models like
-    openai/gpt-oss-120b, llama-3.3-70b-versatile, etc.
-    """
-
     def __init__(
         self,
         api_key: str,

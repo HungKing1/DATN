@@ -1,5 +1,3 @@
-"""Agent API routes."""
-
 from fastapi import APIRouter, Depends, Request
 from rag_backend.presentation.schemas.agent_schemas import AgentQueryRequest, AgentQueryResponse
 
@@ -13,5 +11,4 @@ async def query_agent(
     body: AgentQueryRequest,
     controller=Depends(_get_agent_controller),
 ):
-    """Execute a Multi-Agent query and return the response."""
     return await controller.query_agent(body)

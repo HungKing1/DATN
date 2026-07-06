@@ -1,9 +1,4 @@
-"""Ingestion controller — thin layer delegating to IngestionService."""
-
 from __future__ import annotations
-
-import logging
-
 from rag_backend.application.services.ingestion_service import IngestionService
 from rag_backend.domain.interfaces.vector_repository import VectorRepository
 from rag_backend.presentation.schemas.ingestion_schemas import (
@@ -12,13 +7,11 @@ from rag_backend.presentation.schemas.ingestion_schemas import (
     LawListResponse,
     MongoIngestionRequest,
 )
+import logging
 
 logger = logging.getLogger(__name__)
 
-
 class IngestionController:
-    """Controller for document ingestion operations (LegalChunk schema)."""
-
     def __init__(
         self,
         ingestion_service: IngestionService,
@@ -31,7 +24,6 @@ class IngestionController:
         self,
         request: MongoIngestionRequest,
     ) -> IngestionResultDto:
-        """Ingest a law from MongoDB by so_ky_hieu."""
         result = await self._service.ingest_from_mongodb(request.so_ky_hieu)
         
         return IngestionResultDto(

@@ -1,5 +1,3 @@
-"""Tools for Master Lawyer and Paralegal agents."""
-
 from typing import Optional
 from langchain_core.tools import tool
 
@@ -69,7 +67,6 @@ def create_search_law_database_tool(
         """
         try:
             if not query:
-                # Fallback in case the LLM fails to provide a query
                 query = f"Nội dung quy định về {law_name or ''} {so_ky_hieu or ''} Điều {dieu_number or ''}"
 
             query_vector = await embedding_provider.embed_text(query)
@@ -86,18 +83,15 @@ def create_search_law_database_tool(
             if not results:
                 return "Không tìm thấy kết quả nào phù hợp."
                 
-            # Expand split chunks
             from rag_backend.application.utils.chunk_utils import expand_split_chunks_async
             expanded_results = await expand_split_chunks_async(results, vector_repo, law_name)
             
-            # Rerank — use reranker's configured top_k from settings
             ranked_results = await reranker.rerank(
                 query=query, results=expanded_results
             )
                 
             chunks = []
             for i, r in enumerate(ranked_results):
-                # Only extract raw content, DO NOT summarize
                 chunks.append(f"--- Chunk {i+1} ---\nNguồn: {r.metadata.get('ten_day_du', 'Unknown')}\nNội dung:\n{r.content}")
             
             return "\n\n".join(chunks)

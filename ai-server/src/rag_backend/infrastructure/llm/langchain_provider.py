@@ -1,5 +1,3 @@
-"""LangChain OpenAI LLM provider adapter."""
-
 from __future__ import annotations
 
 import logging
@@ -29,14 +27,6 @@ def extract_text_from_message(content) -> str:
     return str(content)
 
 class LangChainOpenAIProvider(LLMProvider):
-    """LLM provider wrapping LangChain's ChatOpenAI.
-
-    To switch to another LLM:
-    1. Create OllamaProvider(LLMProvider) or ClaudeProvider(LLMProvider)
-    2. Change DI container wiring
-    No other code changes needed.
-    """
-
     def __init__(
         self,
         api_key: str,
@@ -69,7 +59,6 @@ class LangChainOpenAIProvider(LLMProvider):
                 messages.append(SystemMessage(content=system_prompt))
             messages.append(HumanMessage(content=prompt))
 
-            # Override params if provided
             llm = self._llm
             if temperature is not None or max_tokens is not None:
                 llm = self._llm.bind(

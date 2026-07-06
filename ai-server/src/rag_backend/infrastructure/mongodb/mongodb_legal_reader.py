@@ -1,5 +1,3 @@
-"""MongoDB reader for legal documents."""
-
 from __future__ import annotations
 
 import logging
@@ -23,8 +21,6 @@ class MongoDBLegalReader:
             "so_ky_hieu": so_ky_hieu
         })
         if doc:
-            # Motor returns a dict with ObjectId, which we can cast to string if needed
-            # We keep it as is, but maybe convert _id to str for safety
             doc["_id"] = str(doc["_id"])
             if "body" in doc:
                 doc["body"] = [str(b) for b in doc["body"]]

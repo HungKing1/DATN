@@ -1,5 +1,3 @@
-"""VectorRepository interface — Repository Pattern for vector databases."""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

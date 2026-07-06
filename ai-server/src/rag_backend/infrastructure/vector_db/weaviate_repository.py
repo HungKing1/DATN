@@ -1,5 +1,3 @@
-"""Weaviate implementation of VectorRepository for LegalChunk."""
-
 from __future__ import annotations
 
 import logging
@@ -289,11 +287,6 @@ class WeaviateRepository(VectorRepository):
             raise VectorStoreError(f"hybrid_search failed (so_ky_hieu={so_ky_hieu})", detail=str(e)) from e
 
     async def fetch_random_chunks(self, limit: int = 50) -> list[RetrievalResult]:
-        """Fetch a sample of chunks without any search query.
-
-        Dùng Weaviate fetch_objects (không cần vector/query) để lấy
-        các LegalChunk. Phù hợp cho việc sinh dataset đánh giá (data_generator.py).
-        """
         try:
             client = await self._get_client()
             if not client.collections.exists("LegalChunk"):

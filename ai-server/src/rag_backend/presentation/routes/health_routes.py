@@ -1,5 +1,3 @@
-"""Health check routes."""
-
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
@@ -12,7 +10,6 @@ router = APIRouter(tags=["Health"])
 
 @router.get("/health")
 async def health_check():
-    """Application health check."""
     settings = get_settings()
     return {
         "status": "healthy",

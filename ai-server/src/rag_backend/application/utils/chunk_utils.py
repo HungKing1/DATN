@@ -1,5 +1,3 @@
-"""Utility functions for handling document chunks."""
-
 from rag_backend.domain.interfaces.vector_repository import VectorRepository
 from rag_backend.domain.models.query import RetrievalResult
 

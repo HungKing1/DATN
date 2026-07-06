@@ -1,5 +1,3 @@
-"""LLMProvider interface — Adapter Pattern for LLM services."""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

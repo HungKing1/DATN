@@ -1,5 +1,3 @@
-"""Dependency Injection container — wires all layers together."""
-
 from __future__ import annotations
 
 import logging
@@ -39,15 +37,10 @@ logger = logging.getLogger(__name__)
 
 
 class Container:
-    """Central DI container — creates and wires all dependencies."""
-
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
         self._instances: dict[str, object] = {}
 
-    # ──────────────────────────────────────────────
-    # Infrastructure Singletons
-    # ──────────────────────────────────────────────
 
     def embedding_provider(self) -> EmbeddingProvider:
         if "embedding_provider" not in self._instances:
@@ -114,9 +107,6 @@ class Container:
             )
         return self._instances["mongo_reader"]  # type: ignore
 
-    # ──────────────────────────────────────────────
-    # Application Services
-    # ──────────────────────────────────────────────
 
     def ingestion_service(self) -> IngestionService:
         if "ingestion_service" not in self._instances:
@@ -133,9 +123,6 @@ class Container:
             self._instances["prompt_manager"] = PromptManager()
         return self._instances["prompt_manager"]  # type: ignore
 
-    # ──────────────────────────────────────────────
-    # Presentation Controllers
-    # ──────────────────────────────────────────────
 
     def ingestion_controller(self) -> IngestionController:
         if "ingestion_controller" not in self._instances:
@@ -175,7 +162,7 @@ class Container:
             )
         return self._instances["agent_controller"]  # type: ignore
 
-# --- Module-level singleton ---
+# Module-level singleton
 
 _container: Container | None = None
 

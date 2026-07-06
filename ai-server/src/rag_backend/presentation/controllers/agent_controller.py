@@ -1,5 +1,3 @@
-"""Agent Controller."""
-
 import logging
 from fastapi import HTTPException
 
@@ -18,7 +16,6 @@ class AgentController:
                 question=body.question
             )
             
-            # Extract laws consulted
             laws_consulted = set()
             for finding in result.get("research_findings", []):
                 if finding.get("law_uuid"):
