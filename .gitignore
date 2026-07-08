@@ -6,3 +6,5 @@ structure
 prompt.txt
 start-all.ps1
 stop-all.ps1
+.env.docker
+*.md

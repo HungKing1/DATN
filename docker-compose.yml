@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  weaviate:
+    image: semitechnologies/weaviate:latest
+    container_name: datn_weaviate
+    restart: always
+    ports:
+      - "9090:8080"
+      - "50051:50051"
+    environment:
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'none'
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - ./ai-server/src/rag_backend/data:/var/lib/weaviate
+
+  ai-server:
+    build:
+      context: ./ai-server
+    container_name: datn_ai_server
+    restart: always
+    depends_on:
+      - weaviate
+    env_file:
+      - .env.docker
+    ports:
+      - "8000:8000"
+
+  backend:
+    build:
+      context: ./backend
+    container_name: datn_backend
+    restart: always
+    depends_on:
+      - ai-server
+    env_file:
+      - .env.docker
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: datn_frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      - VITE_PORT=3000
+    ports:
+      - "3000:3000"
