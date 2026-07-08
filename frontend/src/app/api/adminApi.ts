@@ -1,10 +1,7 @@
 import { fetchApi } from './apiClient';
 import { LawInfo, LawCreateResponse, AiHealthResponse } from '../types';
-// ─── API calls — all go through Backend Java (port 8080) ─────
 
 export const adminApi = {
-
-  // ── Law Management (Weaviate source of truth) ─────────────────
 
   /** Lấy danh sách tất cả Laws từ Weaviate */
   listLaws: (): Promise<LawInfo[]> =>

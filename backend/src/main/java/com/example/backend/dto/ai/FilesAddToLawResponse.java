@@ -8,11 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- * Maps to AI Server's FilesAddToLawResponse.
- *
- * Returned after adding 1 or more files to an existing Law.
- */
 @Data
 @Builder
 @NoArgsConstructor

@@ -75,28 +75,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const messageIdCounter = useRef(100);
 
-  // Derived: messages for active conversation
   const messages = conversationMessages[activeConversationId] ?? [];
 
-  // ======================
-  // INITIAL DATA FETCHING
-  // ======================
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Tải dữ liệu ban đầu từ Backend
     const fetchInitialData = async () => {
       try {
         const [conversationsData] = await Promise.all([
           chatService.getConversations().catch(() => [])
         ]);
 
-
-
         if (conversationsData.length > 0) {
           setConversations(conversationsData);
-          // Do not auto-select the first conversation so user sees the general "New Chat" page
-          // Unless it was already set by URL params
           setActiveConversationId(prev => prev ? prev : '');
         }
       } catch (e) {
@@ -107,7 +98,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchInitialData();
   }, [isAuthenticated]);
 
-  // Fetch messages whenever active conversation changes
   useEffect(() => {
     if (activeConversationId && !conversationMessages[activeConversationId]) {
       chatService.getMessages(activeConversationId)
@@ -116,14 +106,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeConversationId, conversationMessages]);
 
-  // Close Reference Panel when switching to a different conversation
   useEffect(() => {
     closeReference();
   }, [activeConversationId, closeReference]);
 
-  // ======================
-  // ACTIONS
-  // ======================
 
   const createConversation = useCallback(async (title: string) => {
     try {
@@ -173,7 +159,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (content: string) => {
       let targetNbId = activeConversationId;
 
-      // Auto-create a new conversation if there is no active one
       if (!targetNbId) {
         try {
           const words = content.trim().split(/\s+/);
@@ -188,16 +173,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           return;
         }
       } else {
-        // Nếu chat đã được tạo trước (ví dụ: bấm nút "Mới") thì tự đổi tên khi gửi tin nhắn đầu tiên
         const existingMessages = conversationMessages[targetNbId] || [];
         if (existingMessages.length === 0) {
           const words = content.trim().split(/\s+/);
           const shortTitle = words.slice(0, 6).join(' ') + (words.length > 6 ? '...' : '');
-          
-          // Gọi trực tiếp API backend để cập nhật tên trên database
+
           chatService.updateConversation(targetNbId, shortTitle).then(updated => {
-             // Cập nhật lại UI sau khi backend xác nhận thành công
-             setConversations(prev => prev.map(nb => nb.id === targetNbId ? updated : nb));
+            setConversations(prev => prev.map(nb => nb.id === targetNbId ? updated : nb));
           }).catch(err => console.error("Lỗi khi update tên trên backend:", err));
         }
       }
@@ -209,7 +191,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         timestamp: new Date().toISOString(),
       };
 
-      // Cập nhật giao diện người dùng ngay lập tức
       setConversationMessages(prev => ({
         ...prev,
         [targetNbId]: [...(prev[targetNbId] ?? []), userMsg],
@@ -221,12 +202,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setThinkingConversationId(targetNbId);
 
       try {
-        // Gửi qua API
         const responseMsg = await chatService.sendMessage(targetNbId, content);
 
         setThinkingConversationId(null);
-
-        // Khởi tạo message streaming giả để giữ UI effect
         const uiAiMsg = { ...responseMsg, isStreaming: true };
         setConversationMessages(prev => ({
           ...prev,
@@ -234,7 +212,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }));
 
 
-        // Streaming effect cục bộ (Nếu BE hỗ trợ SSE, logic này sẽ sửa thành listen chunks)
         setStreamingMsgId(responseMsg.id);
         setStreamingContent('');
         let idx = 0;

@@ -79,8 +79,6 @@ export interface LegalDocumentDetail {
   articles: ArticleItem[];
 }
 
-// ─── Shared API Responses ────────────────────────────
-
 export interface PageResponse<T> {
   content: T[];
   totalElements: number;

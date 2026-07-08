@@ -6,11 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Maps to AI Server's IngestionResultDto.
- *
- * Returned after ingesting a Law from MongoDB.
- */
 @Data
 @Builder
 @NoArgsConstructor

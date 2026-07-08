@@ -17,7 +17,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check auth status on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -30,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     };
-    
+
     checkAuth();
   }, []);
 
@@ -42,7 +41,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (data: any) => {
     await authApi.register(data);
-    // Sau khi đăng ký xong có thể login luôn hoặc bắt user sang trang login
   };
 
   const logout = async () => {

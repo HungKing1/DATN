@@ -42,7 +42,6 @@ public class ChatServiceImpl implements ChatService {
                     .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
         }
 
-        // Save User Message
         Message userMessage = Message.builder()
                 .conversationId(conversationId)
                 .role("user")
@@ -50,12 +49,9 @@ public class ChatServiceImpl implements ChatService {
                 .build();
         messageRepository.save(userMessage);
 
-        // Route to AI Server Multi-Agent pipeline
         Message aiMessage = processAgentQuery(conversationId, request.getContent());
 
         aiMessage = messageRepository.save(aiMessage);
-
-        // Re-fetch conversation to avoid overwriting concurrent updates (e.g., title updates from frontend)
         Conversation latestConversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
         latestConversation.setMessageCount(latestConversation.getMessageCount() + 2);
@@ -64,20 +60,10 @@ public class ChatServiceImpl implements ChatService {
         return aiMessage;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // PRIVATE HELPERS
-    // ─────────────────────────────────────────────────────────────
-
-
-
-    /**
-     * Multi-Agent RAG pipeline — calls POST /api/v1/query/agent on AI Server.
-     * Deep reasoning: MasterLawyerAgent → parallel ParalegalAgents → synthesize.
-     */
     private Message processAgentQuery(String conversationId, String content) {
         try {
             AgentQueryRequest agentRequest = AgentQueryRequest.builder()
-                    .question(content)   // AI Server field is "question", not "query"
+                    .question(content)
                     .build();
 
             AgentQueryResponse agentResponse = aiServerClient.agentQuery(agentRequest);
@@ -113,4 +99,3 @@ public class ChatServiceImpl implements ChatService {
                 .build();
     }
 }
-

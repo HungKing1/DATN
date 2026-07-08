@@ -10,13 +10,12 @@ export function ReferencePanel() {
   const { referencePanel, closeReference } = useApp();
   const [doc, setDoc] = useState<LegalDocumentDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!referencePanel.isOpen || !referencePanel.soKyHieu) return;
 
-    // Load data
     setIsLoading(true);
     legalService.getDocumentDetail(referencePanel.soKyHieu)
       .then(res => {
@@ -31,7 +30,6 @@ export function ReferencePanel() {
       });
   }, [referencePanel.soKyHieu, referencePanel.isOpen]);
 
-  // Scroll and highlight target
   useEffect(() => {
     if (!isLoading && doc && referencePanel.targetId) {
       setTimeout(() => {
@@ -39,7 +37,7 @@ export function ReferencePanel() {
         if (el && contentRef.current) {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 300); // slight delay to ensure render
+      }, 300);
     }
   }, [isLoading, doc, referencePanel.targetId]);
 
@@ -104,12 +102,12 @@ export function ReferencePanel() {
             <div className="space-y-6">
               {doc.articles.map((article, index) => {
                 const prevArticle = index > 0 ? doc.articles[index - 1] : null;
-                
+
                 const showPhan = article.phan && (!prevArticle || prevArticle.phan !== article.phan);
                 const showChuong = article.chuong && (!prevArticle || prevArticle.chuong !== article.chuong || showPhan);
                 const showMuc = article.muc && (!prevArticle || prevArticle.muc !== article.muc || showChuong);
                 const showTieuMuc = article.tieuMuc && (!prevArticle || prevArticle.tieuMuc !== article.tieuMuc || showMuc);
-                
+
                 return (
                   <React.Fragment key={article.id}>
                     {(showPhan || showChuong || showMuc || showTieuMuc) && (
@@ -121,13 +119,12 @@ export function ReferencePanel() {
                       </div>
                     )}
 
-                    <div 
-                      id={`ref-dieu-${article.dieu}`} 
-                      className={`space-y-2 scroll-mt-4 p-3 rounded-md transition-colors duration-300 ${
-                        referencePanel.targetId === `dieu-${article.dieu}` 
-                          ? 'bg-blue-50' 
+                    <div
+                      id={`ref-dieu-${article.dieu}`}
+                      className={`space-y-2 scroll-mt-4 p-3 rounded-md transition-colors duration-300 ${referencePanel.targetId === `dieu-${article.dieu}`
+                          ? 'bg-blue-50'
                           : 'hover:bg-muted/50'
-                      }`}
+                        }`}
                     >
                       <h4 className="text-sm font-bold text-foreground">
                         {article.titleGoc || `Điều ${article.dieu}. ${article.tenDieu}`}
@@ -146,7 +143,7 @@ export function ReferencePanel() {
               <div className="italic text-muted-foreground text-center">
                 Luật này được {doc.coQuanBanHanh || "Quốc hội"} nước Cộng hòa xã hội chủ nghĩa Việt Nam {doc.khoaQuocHoi ? `${doc.khoaQuocHoi}, ` : ""}{doc.kyHop || ""} thông qua ngày {doc.ngayThongQua ? doc.ngayThongQua : "..."}.
               </div>
-              
+
               <div className="flex justify-end pr-4 pt-4">
                 <div className="text-center space-y-16">
                   <div className="font-bold">{doc.chucDanhNguoiKy || "CHỦ TỊCH QUỐC HỘI"}</div>

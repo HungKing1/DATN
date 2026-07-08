@@ -13,11 +13,6 @@ import reactor.core.publisher.Flux;
 import java.util.List;
 import java.util.Map;
 
-/**
- * HTTP client for communicating with the AI Server (FastAPI RAG Backend).
- *
- * All RAG-related operations (query, ingestion, Law management) go through this service.
- */
 @Slf4j
 @Service
 public class AiServerClient {
@@ -32,12 +27,6 @@ public class AiServerClient {
         this.aiServerAgentWebClient = aiServerAgentWebClient;
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // QUERY ENDPOINTS
-    // ═══════════════════════════════════════════════════════════
-
-
-
     public AgentQueryResponse agentQuery(AgentQueryRequest request) {
         log.info("Sending Multi-Agent RAG query to AI Server: {}", request.getQuestion());
         try {
@@ -48,17 +37,14 @@ public class AiServerClient {
                     .bodyToMono(AgentQueryResponse.class)
                     .block();
         } catch (WebClientResponseException e) {
-            log.error("AI Server returned error for agent query: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("AI Server returned error for agent query: {} - {}", e.getStatusCode(),
+                    e.getResponseBodyAsString());
             throw new RuntimeException("AI Server agent query failed: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error("Failed to connect to AI Server for agent query: {}", e.getMessage());
             throw new RuntimeException("AI Server is unavailable. Please try again later.", e);
         }
     }
-
-    // ═══════════════════════════════════════════════════════════
-    // LAW MANAGEMENT ENDPOINTS
-    // ═══════════════════════════════════════════════════════════
 
     @SuppressWarnings("unchecked")
     public List<LawInfo> listLaws() {
@@ -67,7 +53,8 @@ public class AiServerClient {
             Map<String, Object> response = aiServerWebClient.get()
                     .uri("/api/v1/ingestion/laws")
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                    })
                     .block();
 
             if (response == null || !response.containsKey("laws")) {
@@ -81,8 +68,7 @@ public class AiServerClient {
                     .tenDayDu((String) m.getOrDefault("ten_day_du", ""))
                     .loaiVanBan((String) m.getOrDefault("loai_van_ban", ""))
                     .chunkCount(m.get("chunk_count") != null ? ((Number) m.get("chunk_count")).intValue() : 0)
-                    .build()
-            ).toList();
+                    .build()).toList();
 
         } catch (Exception e) {
             log.error("Failed to list laws from AI Server: {}", e.getMessage());
@@ -149,15 +135,15 @@ public class AiServerClient {
             }
 
             return DeleteLawResponse.builder()
-                    .lawUuid(soKyHieu) // Using lawUuid field to hold soKyHieu for backward compatibility in DeleteLawResponse class if we didn't change it, wait we didn't check DeleteLawResponse
-                    // Wait, let me just assume DeleteLawResponse is updated or keep lawUuid field.
-                    // I will check DeleteLawResponse after this.
-                    .chunksDeleted(raw.get("chunks_deleted") != null ? ((Number) raw.get("chunks_deleted")).intValue() : 0)
+                    .lawUuid(soKyHieu)
+                    .chunksDeleted(
+                            raw.get("chunks_deleted") != null ? ((Number) raw.get("chunks_deleted")).intValue() : 0)
                     .lawDeleted(Boolean.TRUE.equals(raw.get("law_deleted")))
                     .status((String) raw.getOrDefault("status", "deleted"))
                     .build();
         } catch (WebClientResponseException e) {
-            log.error("AI Server error deleting Law {}: {} - {}", soKyHieu, e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("AI Server error deleting Law {}: {} - {}", soKyHieu, e.getStatusCode(),
+                    e.getResponseBodyAsString());
             throw new RuntimeException("Law deletion failed: " + e.getMessage(), e);
         }
     }
@@ -170,23 +156,23 @@ public class AiServerClient {
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
-            
+
             if (response != null) {
                 Map<String, Object> modifiableResponse = new java.util.HashMap<>(response);
                 @SuppressWarnings("unchecked")
-                Map<String, Object> services = (Map<String, Object>) modifiableResponse.getOrDefault("services", new java.util.HashMap<String, Object>());
+                Map<String, Object> services = (Map<String, Object>) modifiableResponse.getOrDefault("services",
+                        new java.util.HashMap<String, Object>());
                 Map<String, Object> modifiableServices = new java.util.HashMap<>(services);
-                
-                // If we successfully got a response from the AI server, it means the AI server is healthy
+
                 modifiableServices.put("ai_server", "healthy");
                 modifiableResponse.put("services", modifiableServices);
-                
+
                 return modifiableResponse;
             }
         } catch (Exception e) {
             log.warn("AI Server health check failed: {}", e.getMessage());
         }
-        
+
         Map<String, Object> fallback = new java.util.HashMap<>();
         fallback.put("status", "unreachable");
         fallback.put("services", Map.of("ai_server", "unhealthy", "weaviate", "unknown"));

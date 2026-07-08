@@ -6,11 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Maps to AI Server's LawInfo (from Weaviate LegalChunk distinct aggregation).
- *
- * Weaviate is the source of truth for all Law metadata.
- */
 @Data
 @Builder
 @NoArgsConstructor

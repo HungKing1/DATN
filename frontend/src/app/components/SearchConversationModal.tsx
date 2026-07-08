@@ -16,7 +16,6 @@ export function SearchConversationModal({ isOpen, onClose }: SearchConversationM
   const [searchTerm, setSearchTerm] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus input when modal opens
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -24,7 +23,6 @@ export function SearchConversationModal({ isOpen, onClose }: SearchConversationM
     }
   }, [isOpen]);
 
-  // Handle escape key to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -37,13 +35,10 @@ export function SearchConversationModal({ isOpen, onClose }: SearchConversationM
 
   if (!isOpen) return null;
 
-  // Đảo ngược mảng để hiển thị từ mới nhất đến cũ nhất
   const reversedConversations = [...conversations].reverse();
 
-  // Lọc 5 cuộc trò chuyện gần nhất cho phần Today
   const todayConversations = reversedConversations.slice(0, 5);
 
-  // Lọc theo searchTerm
   const filteredConversations = searchTerm.trim()
     ? reversedConversations.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase()))
     : todayConversations;
@@ -79,9 +74,8 @@ export function SearchConversationModal({ isOpen, onClose }: SearchConversationM
           exit={{ opacity: 0, scale: 0.95, y: -20 }}
           transition={{ duration: 0.2, type: 'spring', bounce: 0.25 }}
           className="w-full max-w-lg bg-card border border-border shadow-2xl rounded-xl overflow-hidden flex flex-col max-h-[70vh]"
-          onClick={e => e.stopPropagation()} // Prevent close on modal click
+          onClick={e => e.stopPropagation()}
         >
-          {/* Header - Search Input */}
           <div className="flex items-center px-4 border-b border-border bg-card relative">
             <Search className="w-4 h-4 text-muted-foreground mr-2 flex-shrink-0" />
             <input

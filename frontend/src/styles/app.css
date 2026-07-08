@@ -1,6 +1,3 @@
-/* ===== GLOBAL APP STYLES ===== */
-
-/* Action buttons in chat */
 .action-btn {
   display: inline-flex;
   align-items: center;
@@ -17,7 +14,6 @@
   color: var(--color-foreground);
 }
 
-/* ===== MARKDOWN BODY ===== */
 
 .markdown-body {
   line-height: 1.65;
@@ -105,7 +101,6 @@
 }
 
 
-/* Scrollbar styles */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-muted-foreground) transparent;
@@ -125,9 +120,6 @@
   border-radius: 999px;
 }
 
-/* No theme transitions needed — light mode only */
-
-/* Override transition for interactive elements to be instant */
 button,
 a,
 input,

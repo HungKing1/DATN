@@ -1,11 +1,6 @@
 import { Navigate, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 
-/**
- * ProtectedRoute — Requires authentication.
- * Redirects unauthenticated users to /auth/login.
- * Passes the current location so we can redirect back after login.
- */
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
@@ -28,11 +23,6 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/**
- * AdminRoute — Requires authentication + ROLE_ADMIN.
- * Redirects non-admin users to the main app.
- * Redirects unauthenticated users to login.
- */
 export function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();

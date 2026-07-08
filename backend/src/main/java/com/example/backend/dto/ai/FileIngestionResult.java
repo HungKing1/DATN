@@ -8,9 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- * Per-file result inside a batch Law ingestion response.
- */
 @Data
 @Builder
 @NoArgsConstructor

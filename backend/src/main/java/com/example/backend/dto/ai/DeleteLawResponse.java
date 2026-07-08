@@ -6,11 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Maps to AI Server's DeleteLawResponse.
- *
- * Returned after cascade-deleting a Law and all its LawChunk objects from Weaviate.
- */
 @Data
 @Builder
 @NoArgsConstructor
