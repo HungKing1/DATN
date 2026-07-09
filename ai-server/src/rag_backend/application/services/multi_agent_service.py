@@ -16,26 +16,18 @@ class MultiAgentService:
     def _build_graph(self):
         builder = StateGraph(DeepAgentState)  # type: ignore[arg-type]
         
-        # Add nodes
         builder.add_node("master", self._master_agent.run)
         builder.add_node("master_tools", self._master_tools_node)
         builder.add_node("paralegal", self._paralegal_factory.run_parallel)
         
-        # Set entry point
         builder.set_entry_point("master")
-        
-        # Add edges
         builder.add_conditional_edges(
             "master", 
             self._route_after_master,
-            # We must specify the path map if we are using dynamic routes
             ["master_tools", "paralegal", END]
         )
         
-        # After executing simple tools, go back to master to see if it wants to delegate or answer
         builder.add_edge("master_tools", "master")
-        
-        # After parallel paralegals finish, go back to master
         builder.add_edge("paralegal", "master")
         
         return builder.compile()
@@ -80,7 +72,6 @@ class MultiAgentService:
             return END
             
         if not getattr(last_msg, "tool_calls", None):
-            # No tool calls -> finished
             return END
             
         sends = []

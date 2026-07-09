@@ -24,63 +24,49 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # --- Application ---
     app_name: str = "RAG Backend"
     app_version: str = "0.1.0"
     log_level: str = "INFO"
 
-    # --- Server ---
     host: str = "0.0.0.0"
     port: int = 8000
 
-    # --- LLM Provider ---
     llm_provider: LLMProviderType = LLMProviderType.GOOGLE
     
-    # --- OpenAI (backup) ---
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
     openai_temperature: float = 0.1
     openai_max_tokens: int = 2048
 
-    # --- Google Gemini ---
     google_api_key: str = ""
     google_model: str = "gemini-3.1-flash-lite-preview"
     google_temperature: float = 0.1
 
-    # --- Groq ---
     groq_api_key: str = ""
     groq_model: str = "openai/gpt-oss-120b"
     groq_temperature: float = 0.1
     groq_max_tokens: int = 2048
 
-    # --- Embedding ---
     embedding_model: str = "all-MiniLM-L6-v2"
 
-    # --- Vector Database ---
     weaviate_url: str = "http://localhost:9090"
     weaviate_api_key: str = ""
 
-    # --- Chunking ---
     chunk_min_tokens: int = 300
     chunk_max_tokens: int = 600
 
-    # --- MongoDB ---
     mongodb_url: str = "mongodb://localhost:27017"
     mongodb_db_name: str = "test"
 
-    # --- Reranker ---
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     reranker_top_k: int = 5
 
-    # --- Retrieval ---
     retrieval_top_k: int = 20
     hybrid_search_alpha: float = Field(default=0.5, ge=0.0, le=1.0)
 
-    # --- Agent ---
     max_agent_iterations: int = 10
     max_paralegal_recursion: int = 10
 
-    # --- Ingestion ---
     max_batch_size: int = 100
     max_document_size_mb: int = 50
 

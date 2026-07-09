@@ -13,7 +13,6 @@ async def expand_split_chunks_async(
 
     for r in results:
         is_split = r.metadata.get("is_split")
-        # If so_ky_hieu isn't passed, try to get it from the chunk metadata
         chunk_so_ky_hieu = so_ky_hieu or r.metadata.get("so_ky_hieu")
         
         if is_split and chunk_so_ky_hieu:
@@ -26,11 +25,8 @@ async def expand_split_chunks_async(
                 all_parts.sort(key=lambda x: x.metadata.get("split_part", 1))
                 if all_parts:
                     full_content = "\n".join(p.content for p in all_parts)
-                    # Replace content with full merged content
                     expanded.append(r.model_copy(update={"content": full_content}))
         else:
-            # Deduplicate merged articles if they appear multiple times just in case,
-            # but standard chunks we just append.
             expanded.append(r)
 
     return expanded
